@@ -29,6 +29,14 @@ export function useAuth() {
 
             if (isAuth && storedUser) {
                 setUser(storedUser);
+
+                // Onboarding Check
+                // If user is logged in but missing required fields, and not already on onboarding page
+                if (pathname && !pathname.includes("/onboarding")) {
+                    if (!storedUser.dateOfBirth || !storedUser.phoneNumber || !storedUser.nexaWalletAddress) {
+                        router.push("/onboarding");
+                    }
+                }
             } else {
                 setUser(null);
                 handleUnauthenticated();

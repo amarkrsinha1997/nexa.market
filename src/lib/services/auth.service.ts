@@ -20,7 +20,7 @@ export const ErrorCode = {
     USER_NOT_FOUND: "USER_NOT_FOUND",
 };
 
-interface GoogleTokenPayload {
+export interface GoogleTokenPayload {
     email: string;
     name?: string;
     picture?: string;
@@ -37,7 +37,7 @@ export class AuthService {
         );
     }
 
-    private static async verifyGoogleToken(token: string): Promise<GoogleTokenPayload> {
+    public static async verifyGoogleToken(token: string): Promise<GoogleTokenPayload> {
         const client = this.getGoogleClient();
         const ticket = await client.verifyIdToken({
             idToken: token,
