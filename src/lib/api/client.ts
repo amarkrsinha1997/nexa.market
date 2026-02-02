@@ -108,7 +108,10 @@ class ApiClient {
                 .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
         });
 
-        window.location.href = "/login";
+        if (typeof window !== "undefined") {
+            const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+            window.location.href = `/login?returnUrl=${returnUrl}`;
+        }
         throw new ApiError("Session expired", "AUTH_EXPIRED");
     }
 
