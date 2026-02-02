@@ -42,13 +42,20 @@ export default function OnboardingForm() {
         const fullPhoneNumber = `${countryCode} ${localPhoneNumber}`;
 
         try {
-            await apiClient.patch("/user/profile", {
+            const response = await apiClient.patch<{ user: any }>("/user/profile", {
                 dateOfBirth,
                 phoneNumber: fullPhoneNumber,
                 nexaWalletAddress: nexaAddress
             });
 
-            router.push("/users/home");
+            if (response.success && response.data) {
+                // Update local auth state immediately so redirect logic in useAuth triggers
+                const { authApi } = require("@/lib/api/auth"); // Dynamic import to avoid circular dep if any
+                authApi.storeUser(response.data.user);
+
+                // Force a hard navigation to ensure state is picked up
+                window.location.href = "/users/home";
+            }
         } catch (e: any) {
             setError(e.message || "Failed to update profile");
         } finally {
@@ -74,6 +81,7 @@ export default function OnboardingForm() {
                     label="Date of Birth"
                     selected={dateOfBirth}
                     onSelect={setDateOfBirth}
+                    maxDate={new Date()}
                 />
 
                 <PhoneInput

@@ -25,17 +25,35 @@ export function useAuth() {
                 isAuth = await authApi.refreshSession();
             }
 
-            const storedUser = authApi.getStoredUser();
+            if (isAuth) {
+                // Fetch fresh profile data to ensure we have latest onboarding status
+                try {
+                    const profileRes = await authApi.getProfile();
+                    if (profileRes.success && profileRes.data) {
+                        const freshUser = profileRes.data.user;
+                        setUser(freshUser);
+                        authApi.storeUser(freshUser); // Sync to storage
 
-            if (isAuth && storedUser) {
-                setUser(storedUser);
+                        // Onboarding Check with FRESH data
+                        if (pathname) {
+                            const isOnboardingPage = pathname.includes("/users/onboarding");
 
-                // Onboarding Check
-                // If user is logged in but missing required fields, and not already on onboarding page
-                if (pathname && !pathname.includes("/onboarding")) {
-                    if (!storedUser.dateOfBirth || !storedUser.phoneNumber || !storedUser.nexaWalletAddress) {
-                        router.push("/onboarding");
+                            if (!freshUser.isOnboardingCompleted && !isOnboardingPage) {
+                                router.push("/users/onboarding");
+                            } else if (freshUser.isOnboardingCompleted && isOnboardingPage) {
+                                router.push("/users/home");
+                            }
+                        }
+                    } else {
+                        // Fallback to stored user if fetch fails (e.g. network error) but auth is valid
+                        const storedUser = authApi.getStoredUser();
+                        if (storedUser) setUser(storedUser);
                     }
+                } catch (e) {
+                    console.error("Failed to fetch fresh profile", e);
+                    // Fallback to stored user
+                    const storedUser = authApi.getStoredUser();
+                    if (storedUser) setUser(storedUser);
                 }
             } else {
                 setUser(null);

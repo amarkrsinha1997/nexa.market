@@ -3,6 +3,31 @@ import { AuthService, ApiError } from "@/lib/services/auth.service";
 import { prisma } from "@/lib/prisma";
 import { Address } from "libnexa-ts";
 
+export async function GET(req: NextRequest) {
+    try {
+        const authHeader = req.headers.get("Authorization");
+        if (!authHeader?.startsWith("Bearer ")) {
+            return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+        }
+
+        const token = authHeader.split(" ")[1];
+        const payload = await AuthService.verifyGoogleToken(token);
+
+        const user = await prisma.user.findUnique({
+            where: { email: payload.email }
+        });
+
+        if (!user) {
+            return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
+        }
+
+        return NextResponse.json({ success: true, data: { user } });
+    } catch (error: any) {
+        console.error("Fetch profile failed", error);
+        return NextResponse.json({ success: false, message: "Error fetching profile" }, { status: 500 });
+    }
+}
+
 export async function PATCH(req: NextRequest) {
     try {
         const authHeader = req.headers.get("Authorization");
@@ -16,6 +41,7 @@ export async function PATCH(req: NextRequest) {
         const payload = await AuthService.verifyGoogleToken(token);
 
         const body = await req.json();
+        console.log("Profile Update Payload:", body); // DEBUG LOG
         const { dateOfBirth, phoneNumber, nexaWalletAddress } = body;
 
         // Validation
@@ -38,7 +64,8 @@ export async function PATCH(req: NextRequest) {
             data: {
                 dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
                 phoneNumber,
-                nexaWalletAddress
+                nexaWalletAddress,
+                isOnboardingCompleted: true
             }
         });
 

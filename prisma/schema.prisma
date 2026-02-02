@@ -10,16 +10,47 @@ datasource db {
 }
 
 model User {
-  id                String    @id @default(uuid())
-  email             String    @unique
-  name              String?
-  role              String    @default("USER") // ADMIN, USER
-  googleId          String?   @unique
-  picture           String?
-  refreshToken      String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  dateOfBirth       DateTime?
-  phoneNumber       String?
-  nexaWalletAddress String?
+  id                    String    @id @default(uuid())
+  email                 String    @unique
+  name                  String?
+  role                  String    @default("USER") // ADMIN, USER
+  googleId              String?   @unique
+  picture               String?
+  refreshToken          String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  dateOfBirth           DateTime?
+  phoneNumber           String?
+  nexaWalletAddress     String?
+  isOnboardingCompleted Boolean   @default(false)
+  orders                Order[]
+}
+
+model Order {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  amountINR  Float // Amount paid in INR
+  nexaAmount Float // Calculated Nexa amount
+  nexaPrice  Float // Price snapshot (INR per Nexa)
+
+  status OrderStatus @default(ORDER_CREATED)
+
+  paymentQrId   String // Which QR was shown
+  transactionId String? // User provided Ref/UTR
+
+  verifiedBy String? // Admin ID who verified
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum OrderStatus {
+  ORDER_CREATED
+  PAYMENT_INIT
+  PAYMENT_PENDING
+  PAYMENT_FAILED
+  PAYMENT_SUCCESS
+  VERIFIED
 }

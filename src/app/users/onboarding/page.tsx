@@ -13,7 +13,7 @@ export default function OnboardingPage() {
 
     useEffect(() => {
         if (!loading && !isAuthenticated) {
-            router.push("/login?returnUrl=/onboarding");
+            router.push("/login?returnUrl=/users/onboarding");
         }
         // If user already has details, maybe redirect?
         if (user && user.nexaWalletAddress && user.dateOfBirth && user.phoneNumber) {

@@ -4,7 +4,11 @@ import { AuthService, ApiError } from "@/lib/services/auth.service";
 
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
+        const bodyText = await req.text();
+        if (!bodyText) {
+            return NextResponse.json({ success: false, message: "Refresh token is required" }, { status: 400 });
+        }
+        const body = JSON.parse(bodyText);
         const { refreshToken } = body;
 
         if (!refreshToken) {

@@ -19,6 +19,8 @@ export interface User {
     walletAddressChangeCount: number;
     lastLoginAt: string | null;
     createdAt: string;
+    isOnboardingCompleted: boolean;
+    picture: string | null;
 }
 
 export interface AuthResponse {
@@ -53,6 +55,10 @@ export const authApi = {
             // If token is malformed or invalid, consider it expired
             return true;
         }
+    },
+
+    async getProfile(): Promise<ApiResponse<AuthResponse>> {
+        return await apiClient.get<AuthResponse>("/user/profile");
     },
 
     /**
