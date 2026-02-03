@@ -16,7 +16,7 @@ export default function UserHomePage() {
                 <p className="text-gray-400 text-sm">Buy Nexa instantly</p>
             </header>
 
-            <ExchangeForm rate={1.25} />
+            <ExchangeForm />
         </div>
     );
 }

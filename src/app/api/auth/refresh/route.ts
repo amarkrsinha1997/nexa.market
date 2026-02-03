@@ -28,7 +28,6 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (error: any) {
-        console.error("Refresh Error:", error);
         const status = error instanceof ApiError ? error.statusCode : 500;
         const message = error.message || "Internal server error";
         return NextResponse.json({ success: false, message }, { status });

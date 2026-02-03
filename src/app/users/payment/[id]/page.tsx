@@ -63,10 +63,11 @@ export default function PaymentPage() {
     if (error) return <div className="p-10 text-center text-red-500">Error: {error}</div>;
     if (!order) return <div className="p-10 text-center">Order not found</div>;
 
-    const isPending = order.status === "PAYMENT_PENDING";
+    const isVerificationPending = order.status === "VERIFICATION_PENDING";
     const isVerified = order.status === "VERIFIED";
+    const isPaymentSuccess = order.status === "PAYMENT_SUCCESS";
 
-    if (isPending || isVerified) {
+    if (isVerificationPending || isVerified || isPaymentSuccess) {
         return (
             <div className="max-w-md mx-auto space-y-6 pt-8 text-center px-4">
                 <div className="bg-[#1a1b23] rounded-2xl p-8 shadow-xl border border-gray-800 space-y-6 flex flex-col items-center">
@@ -77,7 +78,7 @@ export default function PaymentPage() {
                         <h1 className="text-2xl font-bold text-white mb-2">Payment Submitted</h1>
                         <p className="text-gray-400 text-sm">
                             Your payment is being verified by the admin. <br />
-                            Once verified, your <b>{order.nexaAmount} NEXA</b> tokens will be released.
+                            Once verified, your <b>{order.nexaAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })} NEXA</b> tokens will be released.
                         </p>
                     </div>
                     <div className="bg-[#0f1016] p-4 rounded-lg w-full text-left space-y-2 border border-gray-800">
@@ -87,8 +88,8 @@ export default function PaymentPage() {
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-gray-500">Status</span>
-                            <span className={`font-bold ${isVerified ? 'text-green-500' : 'text-yellow-500'}`}>
-                                {order.status}
+                            <span className={`font-bold ${isPaymentSuccess ? 'text-green-500' : isVerified ? 'text-blue-500' : 'text-yellow-500'}`}>
+                                {order.status.replace(/_/g, ' ')}
                             </span>
                         </div>
                     </div>
@@ -107,11 +108,24 @@ export default function PaymentPage() {
             </button>
 
             <div className="bg-[#1a1b23] rounded-2xl p-6 shadow-xl border border-gray-800 space-y-6 text-center">
-                <div className="space-y-1">
-                    <p className="text-gray-400 text-sm uppercase tracking-wider">Total Payable</p>
-                    <div className="flex items-center justify-center gap-1 text-3xl font-bold text-white">
-                        <IndianRupee size={24} />
-                        {order.amountINR}
+                <div className="space-y-3">
+                    <div className="space-y-1">
+                        <p className="text-gray-400 text-sm uppercase tracking-wider">Total Payable</p>
+                        <div className="flex items-center justify-center gap-1 text-3xl font-bold text-white">
+                            <IndianRupee size={24} />
+                            {order.amountINR}
+                        </div>
+                    </div>
+
+                    {/* NEXA Amount Display */}
+                    <div className="bg-[#0f1016] rounded-lg p-3 border border-gray-800">
+                        <p className="text-gray-500 text-xs mb-1">You will receive</p>
+                        <div className="flex items-center justify-center gap-2">
+                            <span className="text-xl font-bold text-green-400">
+                                {order.nexaAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                            </span>
+                            <span className="text-sm font-medium text-gray-400">NEXA</span>
+                        </div>
                     </div>
                 </div>
 

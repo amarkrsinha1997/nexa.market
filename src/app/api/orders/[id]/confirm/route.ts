@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AuthService } from "@/lib/services/auth.service";
+import { UPIUrlBuilder } from "@/lib/utils/upi-url-builder";
 import { prisma } from "@/lib/prisma";
 
 // GET Order Details
@@ -17,7 +18,10 @@ export async function GET(
         const token = authHeader.split(" ")[1];
         const payload = await AuthService.verifyGoogleToken(token);
 
-        const order = await prisma.order.findUnique({ where: { id } });
+        const order = await prisma.order.findUnique({
+            where: { id },
+            include: { user: true }
+        });
 
         if (!order) {
             return NextResponse.json({ success: false, message: "Order not found" }, { status: 404 });
@@ -29,8 +33,14 @@ export async function GET(
             return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 403 });
         }
 
-        // Reconstruct UPI String on read (or store in DB, but calc is cheap)
-        const upiString = `upi://pay?pa=${order.paymentQrId}&pn=NexaMarket&am=${order.amountINR}&cu=INR&tn=${order.id}`;
+        // Reconstruct UPI String using UPIUrlBuilder with user email
+        const upiString = new UPIUrlBuilder(order.paymentQrId)
+            .setPayeeName("nexa.org")
+            .setAmount(order.amountINR)
+            .setCurrency("INR")
+            .setTransactionNote(`${order.user.email} | Order: ${order.id.slice(0, 8)}`)
+            .setTransactionRef(order.id)
+            .build();
 
         return NextResponse.json({
             success: true,
@@ -77,11 +87,11 @@ export async function POST(
             return NextResponse.json({ success: false, message: "Unauthorized access to order" }, { status: 403 });
         }
 
-        // Update Order
+        // Update Order to VERIFICATION_PENDING (awaiting admin verification)
         const updatedOrder = await prisma.order.update({
             where: { id },
             data: {
-                status: "PAYMENT_PENDING",
+                status: "VERIFICATION_PENDING",
                 transactionId: transactionId || null
             }
         });

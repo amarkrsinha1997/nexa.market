@@ -9,12 +9,12 @@ interface LedgerListProps {
 
 export default function LedgerList({ orders }: LedgerListProps) {
     return (
-        <div className="md:hidden divide-y divide-gray-800">
+        <div className="md:hidden space-y-4">
             {orders.map((order) => (
-                <div key={order.id} className="p-4 space-y-3">
+                <div key={order.id} className="bg-[#1a1b23] border border-gray-800 rounded-2xl p-4 space-y-3 shadow-lg">
                     <div className="flex justify-between items-start">
                         <div>
-                            <div className="text-white font-medium text-base">₹{order.amountINR.toFixed(2)}</div>
+                            <div className="text-red-500 font-medium text-base">- ₹{order.amountINR.toFixed(2)}</div>
                             <div className="text-xs text-gray-500 mt-1">
                                 {format(new Date(order.createdAt), "MMM d, yyyy h:mm a")}
                             </div>
@@ -25,7 +25,10 @@ export default function LedgerList({ orders }: LedgerListProps) {
                         <span className="text-gray-400 flex items-center gap-1">
                             <Coins size={12} /> Nexa
                         </span>
-                        <span className="text-blue-400 font-mono font-medium">{order.nexaAmount.toFixed(4)}</span>
+                        <span className="text-green-500 font-mono font-medium">+ {order.nexaAmount.toLocaleString(undefined, { maximumFractionDigits: 4 })}</span>
+                    </div>
+                    <div className="text-xs font-mono text-gray-500 break-all">
+                        Order: {order.id}
                     </div>
                     {order.transactionId && (
                         <div className="text-xs font-mono text-gray-500 truncate">

@@ -10,7 +10,7 @@ import { Save, User as UserIcon, Calendar, Mail, Wallet, ChevronRight } from "lu
 import { format } from "date-fns";
 
 export default function ProfilePage() {
-    const { user, loading, checkAuth } = useAuth();
+    const { user, loading, refetch } = useAuth();
 
     // Phone State
     const [countryCode, setCountryCode] = useState("+1");
@@ -47,7 +47,7 @@ export default function ProfilePage() {
 
             if (res.success) {
                 setMessage({ type: 'success', text: "Phone number updated successfully!" });
-                await checkAuth();
+                await refetch();
             }
         } catch (error: any) {
             setMessage({ type: 'error', text: error.message || "Failed to update profile" });

@@ -3,32 +3,73 @@
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api/client";
-import { FileText, Coins } from "lucide-react";
+import { FileText, Coins, Filter } from "lucide-react";
 import LedgerTable from "@/components/features/ledger/LedgerTable";
 import LedgerList from "@/components/features/ledger/LedgerList";
 import { Order } from "@/types/order";
+
+type FilterType = "all" | "confirmed" | "verified";
 
 export default function LedgerPage() {
     const { user, loading: authLoading } = useAuth();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [filter, setFilter] = useState<FilterType>("all");
 
     useEffect(() => {
         if (user) {
-            fetchOrders();
+            fetchOrders(1);
         }
-    }, [user]);
+    }, [user, filter]);
 
-    const fetchOrders = async () => {
+    const fetchOrders = async (pageNum: number) => {
         try {
-            const res = await apiClient.get<{ orders: Order[] }>("/orders");
+            if (pageNum === 1) setLoading(true);
+            else setLoadingMore(true);
+
+            const res = await apiClient.get<{ orders: Order[], hasMore: boolean }>(`/orders?page=${pageNum}&limit=10`);
             if (res.success && res.data) {
-                setOrders(res.data.orders);
+                let filteredOrders = res.data.orders;
+
+                // Apply filter
+                if (filter === "confirmed") {
+                    filteredOrders = filteredOrders.filter(o =>
+                        o.status === "VERIFICATION_PENDING" ||
+                        o.status === "VERIFYING" ||
+                        o.status === "VERIFIED" ||
+                        o.status === "RELEASE_PAYMENT" ||
+                        o.status === "PAYMENT_SUCCESS"
+                    );
+                } else if (filter === "verified") {
+                    filteredOrders = filteredOrders.filter(o =>
+                        o.status === "VERIFIED" ||
+                        o.status === "RELEASE_PAYMENT" ||
+                        o.status === "PAYMENT_SUCCESS"
+                    );
+                }
+
+                if (pageNum === 1) {
+                    setOrders(filteredOrders);
+                } else {
+                    setOrders(prev => [...prev, ...filteredOrders]);
+                }
+                setHasMore(res.data.hasMore);
+                setPage(pageNum);
             }
         } catch (error) {
             console.error("Failed to fetch ledger", error);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
+        }
+    };
+
+    const handleLoadMore = () => {
+        if (!loadingMore && hasMore) {
+            fetchOrders(page + 1);
         }
     };
 
@@ -41,11 +82,41 @@ export default function LedgerPage() {
 
     return (
         <div className="max-w-4xl mx-auto space-y-6 pt-8 pb-20">
-            <header className="px-4 md:px-0">
+            <header className="px-4 md:px-0 space-y-4">
                 <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <FileText className="text-blue-500" /> Transaction Ledger
+                    Ledger
                 </h1>
-                <p className="text-gray-400 text-sm mt-1">History of your payments and deposits</p>
+
+                {/* Filter Buttons */}
+                <div className="flex gap-2 flex-wrap">
+                    <button
+                        onClick={() => setFilter("all")}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "all"
+                                ? "bg-blue-600 text-white"
+                                : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
+                            }`}
+                    >
+                        All Orders
+                    </button>
+                    <button
+                        onClick={() => setFilter("confirmed")}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "confirmed"
+                                ? "bg-blue-600 text-white"
+                                : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
+                            }`}
+                    >
+                        Payment Confirmed
+                    </button>
+                    <button
+                        onClick={() => setFilter("verified")}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "verified"
+                                ? "bg-blue-600 text-white"
+                                : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
+                            }`}
+                    >
+                        Admin Verified
+                    </button>
+                </div>
             </header>
 
             {orders.length === 0 ? (
@@ -55,9 +126,33 @@ export default function LedgerPage() {
                     <p className="text-gray-400 text-sm mt-2">Any purchases or deposits will appear here.</p>
                 </div>
             ) : (
-                <div className="bg-[#1a1b23] rounded-2xl border border-gray-800 overflow-hidden mx-4 md:mx-0 shadow-xl">
-                    <LedgerTable orders={orders} />
+                <div className="space-y-6">
+                    {/* Desktop View */}
+                    <div className="hidden md:block bg-[#1a1b23] rounded-2xl border border-gray-800 overflow-hidden shadow-xl">
+                        <LedgerTable orders={orders} />
+                    </div>
+
+                    {/* Mobile View */}
                     <LedgerList orders={orders} />
+
+                    {hasMore && (
+                        <div className="flex justify-center pb-8">
+                            <button
+                                onClick={handleLoadMore}
+                                disabled={loadingMore}
+                                className="bg-gray-800 hover:bg-gray-700 text-gray-200 px-6 py-2 rounded-full text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {loadingMore ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                                        Loading...
+                                    </>
+                                ) : (
+                                    "Load More"
+                                )}
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

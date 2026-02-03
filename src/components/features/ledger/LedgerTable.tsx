@@ -13,6 +13,7 @@ export default function LedgerTable({ orders }: LedgerTableProps) {
                 <thead className="bg-[#0f1016] text-gray-300 uppercase tracking-wilder text-xs font-semibold">
                     <tr>
                         <th className="px-6 py-4">Date</th>
+                        <th className="px-6 py-4">Order ID</th>
                         <th className="px-6 py-4">Transaction ID</th>
                         <th className="px-6 py-4 text-right">Amount (INR)</th>
                         <th className="px-6 py-4 text-right">Nexa</th>
@@ -25,14 +26,17 @@ export default function LedgerTable({ orders }: LedgerTableProps) {
                             <td className="px-6 py-4 whitespace-nowrap">
                                 {format(new Date(order.createdAt), "MMM d, yyyy h:mm a")}
                             </td>
+                            <td className="px-6 py-4 font-mono text-xs text-gray-300">
+                                {order.id}
+                            </td>
                             <td className="px-6 py-4 font-mono text-xs">
                                 {order.transactionId || "-"}
                             </td>
-                            <td className="px-6 py-4 text-right font-medium text-white">
-                                ₹{order.amountINR.toFixed(2)}
+                            <td className="px-6 py-4 text-right font-medium text-red-500">
+                                - ₹{order.amountINR.toFixed(2)}
                             </td>
-                            <td className="px-6 py-4 text-right text-blue-400 font-medium">
-                                {order.nexaAmount.toFixed(4)}
+                            <td className="px-6 py-4 text-right text-green-500 font-medium">
+                                + {order.nexaAmount.toLocaleString(undefined, { maximumFractionDigits: 4 })}
                             </td>
                             <td className="px-6 py-4 text-center">
                                 <StatusBadge status={order.status} />

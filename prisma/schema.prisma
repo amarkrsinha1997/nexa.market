@@ -47,10 +47,27 @@ model Order {
 }
 
 enum OrderStatus {
-  ORDER_CREATED
-  PAYMENT_INIT
-  PAYMENT_PENDING
-  PAYMENT_FAILED
-  PAYMENT_SUCCESS
-  VERIFIED
+  ORDER_CREATED // Initial order creation
+  PAYMENT_INIT // Payment initiated by user
+  VERIFICATION_PENDING // Payment submitted, awaiting admin verification
+  VERIFYING // Admin is verifying the payment
+  VERIFIED // Payment verified by admin
+  RELEASE_PAYMENT // Payment release in progress
+  PAYMENT_SUCCESS // Payment successfully released
+  PAYMENT_FAILED // Payment verification failed
+}
+
+model AppConfig {
+  key         String  @id @unique
+  value       String
+  description String?
+}
+
+model Upi {
+  id           String   @id @default(uuid())
+  vpa          String   @unique // Virtual Payment Address (e.g. merchant@upi)
+  merchantName String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

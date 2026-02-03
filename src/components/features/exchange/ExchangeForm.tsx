@@ -5,17 +5,25 @@ import { ArrowDown, IndianRupee, Wallet, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { apiClient } from "@/lib/api/client";
+import { useNexaPrice } from "@/lib/hooks/useNexaPrice";
 
-interface ExchangeFormProps {
-    rate: number;
-}
+interface ExchangeFormProps { }
 
-export default function ExchangeForm({ rate }: ExchangeFormProps) {
+export default function ExchangeForm(props: ExchangeFormProps) {
     const router = useRouter();
     const [amount, setAmount] = useState<string>("");
     const [creatingOrder, setCreatingOrder] = useState(false);
+    const nexaPrice = useNexaPrice(); // Use the hook for automatic price updates
 
-    const estimatedNexa = amount ? (parseFloat(amount) * rate).toLocaleString() : "0";
+    // Price is INR per NEXA. So Amount / Price = Nexa Count
+    // Example: 500 INR / 0.00005 = 10,000,000
+
+    const calculateNexa = (inr: number) => {
+        if (!nexaPrice) return 0;
+        return inr / nexaPrice;
+    };
+
+    const estimatedNexa = amount ? calculateNexa(parseFloat(amount)).toLocaleString(undefined, { maximumFractionDigits: 4 }) : "0";
 
     const handleBuyNexa = async () => {
         if (!amount) return;
@@ -88,7 +96,10 @@ export default function ExchangeForm({ rate }: ExchangeFormProps) {
             {/* Rate Info */}
             <div className="flex justify-between text-xs text-gray-500 px-1">
                 <span>Rate</span>
-                <span>1 INR ≈ {rate} NEXA</span>
+                <div className="text-right">
+                    <div>10,000,000 NEXA ≈ ₹{(nexaPrice ? nexaPrice * 10000000 : 500).toFixed(0)}</div>
+                    <div>1 INR ≈ {(nexaPrice ? (1 / nexaPrice) : 20000).toLocaleString(undefined, { maximumFractionDigits: 2 })} NEXA</div>
+                </div>
             </div>
 
             {/* Pay Button */}

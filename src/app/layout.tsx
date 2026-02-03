@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import GoogleAuthProviderWrapper from "@/providers/GoogleAuthProviderWrapper";
+import { AuthProvider } from "@/lib/contexts/AuthContext";
+import PriceSchedulerInitializer from "@/components/providers/PriceSchedulerInitializer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,7 +21,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className} suppressHydrationWarning>
         <GoogleAuthProviderWrapper>
-          {children}
+          <AuthProvider>
+            <PriceSchedulerInitializer />
+            {children}
+          </AuthProvider>
         </GoogleAuthProviderWrapper>
       </body>
     </html>
