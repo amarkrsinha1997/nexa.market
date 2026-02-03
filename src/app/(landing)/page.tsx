@@ -1,16 +1,49 @@
+"use client";
+
 import Link from "next/link";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { LocalStorageUtils } from "@/lib/utils/storage";
+import { ROLES } from "@/lib/config/roles";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function LandingPage() {
+    const { user, isAuthenticated } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            // Already logged in? Optional auto-redirect logic if desired, 
+            // but landing page usually stays accessible.
+            // If they click 'Login' or 'Get Started', they go to dashboard.
+        }
+    }, [isAuthenticated, user]);
+
+    const handleGetStarted = () => {
+        if (isAuthenticated && user) {
+            const preferredView = LocalStorageUtils.getPreferredView();
+            if ((user.role === ROLES.ADMIN || user.role === ROLES.SUPERADMIN) && (preferredView === "admin" || preferredView === null)) {
+                router.push("/admin/dashboard");
+            } else {
+                router.push("/users/home");
+            }
+        } else {
+            router.push("/login"); // Fixed: Go to login if not authenticated
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-slate-900 text-white">
+        <div className="min-h-screen bg-[#0f1016] text-white">
             <nav className="p-6 flex justify-between items-center max-w-7xl mx-auto">
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 text-transparent bg-clip-text">
                     Nexa Market
                 </h1>
                 <div className="space-x-4">
-                    <Link href="/login" className="hover:text-blue-400 transition">Login</Link>
-                    <Link href="/admin" className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition">
-                        Admin Demo
+                    <Link href="/login" className="hover:text-blue-400 transition" onClick={(e) => {
+                        e.preventDefault();
+                        handleGetStarted();
+                    }}>
+                        {isAuthenticated ? "Dashboard" : "Login"}
                     </Link>
                 </div>
             </nav>
@@ -25,9 +58,9 @@ export default function LandingPage() {
                     Join the revolution today.
                 </p>
                 <div className="flex gap-4">
-                    <Link href="/user" className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-8 py-3 rounded-xl transition shadow-lg shadow-emerald-500/20">
+                    <button onClick={handleGetStarted} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-8 py-3 rounded-xl transition shadow-lg shadow-emerald-500/20">
                         Get Started
-                    </Link>
+                    </button>
                     <button className="border border-slate-700 hover:border-slate-500 px-8 py-3 rounded-xl transition">
                         Learn More
                     </button>

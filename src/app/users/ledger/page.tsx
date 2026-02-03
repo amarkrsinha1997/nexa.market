@@ -8,16 +8,18 @@ import LedgerTable from "@/components/features/ledger/LedgerTable";
 import LedgerList from "@/components/features/ledger/LedgerList";
 import { Order } from "@/types/order";
 
-type FilterType = "all" | "confirmed" | "verified";
+type FilterType = "all" | "confirmed" | "verified" | "pending" | "released" | "rejected";
 
-export default function LedgerPage() {
+export default function LedgerPage({ adminView = false }: { adminView?: boolean }) {
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [filter, setFilter] = useState<FilterType>(adminView ? "pending" : "all");
+
     const { user, loading: authLoading } = useAuth();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(false);
-    const [loadingMore, setLoadingMore] = useState(false);
-    const [filter, setFilter] = useState<FilterType>("all");
+    // LoadingMore and Filter already declared above
 
     useEffect(() => {
         if (user) {
@@ -30,25 +32,33 @@ export default function LedgerPage() {
             if (pageNum === 1) setLoading(true);
             else setLoadingMore(true);
 
-            const res = await apiClient.get<{ orders: Order[], hasMore: boolean }>(`/orders?page=${pageNum}&limit=10`);
+            // Build URL with status parameter for admins
+            let url = `/orders?page=${pageNum}&limit=10`;
+            if (adminView && filter !== "all" && (filter === "pending" || filter === "released" || filter === "rejected")) {
+                url += `&status=${filter}`;
+            }
+
+            const res = await apiClient.get<{ orders: Order[], hasMore: boolean }>(url);
             if (res.success && res.data) {
                 let filteredOrders = res.data.orders;
 
-                // Apply filter
-                if (filter === "confirmed") {
-                    filteredOrders = filteredOrders.filter(o =>
-                        o.status === "VERIFICATION_PENDING" ||
-                        o.status === "VERIFYING" ||
-                        o.status === "VERIFIED" ||
-                        o.status === "RELEASE_PAYMENT" ||
-                        o.status === "PAYMENT_SUCCESS"
-                    );
-                } else if (filter === "verified") {
-                    filteredOrders = filteredOrders.filter(o =>
-                        o.status === "VERIFIED" ||
-                        o.status === "RELEASE_PAYMENT" ||
-                        o.status === "PAYMENT_SUCCESS"
-                    );
+                // Client-side filtering only for non-admin views
+                if (!adminView) {
+                    if (filter === "confirmed") {
+                        filteredOrders = filteredOrders.filter(o =>
+                            o.status === "VERIFICATION_PENDING" ||
+                            o.status === "VERIFYING" ||
+                            o.status === "VERIFIED" ||
+                            o.status === "RELEASE_PAYMENT" ||
+                            o.status === "PAYMENT_SUCCESS"
+                        );
+                    } else if (filter === "verified") {
+                        filteredOrders = filteredOrders.filter(o =>
+                            o.status === "VERIFIED" ||
+                            o.status === "RELEASE_PAYMENT" ||
+                            o.status === "PAYMENT_SUCCESS"
+                        );
+                    }
                 }
 
                 if (pageNum === 1) {
@@ -64,6 +74,37 @@ export default function LedgerPage() {
         } finally {
             setLoading(false);
             setLoadingMore(false);
+        }
+    };
+
+    const handleCheckOrder = async (orderId: string) => {
+        if (!user) return;
+        try {
+            const res = await apiClient.post<{ data: Order }>(`/admin/orders/${orderId}/check`, { userId: user.userId });
+            if (res.success && res.data) {
+                // Update local state
+                setOrders(prev => prev.map(o => o.id === orderId ? { ...o, ...res.data } : o));
+            }
+        } catch (error) {
+            console.error("Failed to check order", error);
+            alert("Failed to lock order. It might be locked by someone else.");
+        }
+    };
+
+    const handleOrderDecision = async (orderId: string, decision: 'APPROVE' | 'REJECT', reason?: string) => {
+        if (!user) return;
+        try {
+            const res = await apiClient.post<{ data: Order }>(`/admin/orders/${orderId}/decision`, {
+                userId: user.userId,
+                decision,
+                reason
+            });
+            if (res.success && res.data) {
+                setOrders(prev => prev.map(o => o.id === orderId ? { ...o, ...res.data } : o));
+            }
+        } catch (error) {
+            console.error("Failed to submit decision", error);
+            alert("Failed to submit decision.");
         }
     };
 
@@ -89,33 +130,67 @@ export default function LedgerPage() {
 
                 {/* Filter Buttons */}
                 <div className="flex gap-2 flex-wrap">
-                    <button
-                        onClick={() => setFilter("all")}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "all"
-                                ? "bg-blue-600 text-white"
-                                : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
-                            }`}
-                    >
-                        All Orders
-                    </button>
-                    <button
-                        onClick={() => setFilter("confirmed")}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "confirmed"
-                                ? "bg-blue-600 text-white"
-                                : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
-                            }`}
-                    >
-                        Payment Confirmed
-                    </button>
-                    <button
-                        onClick={() => setFilter("verified")}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "verified"
-                                ? "bg-blue-600 text-white"
-                                : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
-                            }`}
-                    >
-                        Admin Verified
-                    </button>
+                    {!adminView ? (
+                        <>
+                            <button
+                                onClick={() => setFilter("all")}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "all"
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
+                                    }`}
+                            >
+                                All Orders
+                            </button>
+                            <button
+                                onClick={() => setFilter("confirmed")}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "confirmed"
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
+                                    }`}
+                            >
+                                Payment Confirmed
+                            </button>
+                            <button
+                                onClick={() => setFilter("verified")}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "verified"
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
+                                    }`}
+                            >
+                                Admin Verified
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                onClick={() => setFilter("pending")}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "pending"
+                                    ? "bg-amber-500/20 text-amber-500 border border-amber-500/50"
+                                    : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
+                                    }`}
+                            >
+                                NEXA PENDING
+                            </button>
+                            <button
+                                onClick={() => setFilter("released")}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "released"
+                                    ? "bg-emerald-500/20 text-emerald-500 border border-emerald-500/50"
+                                    : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
+                                    }`}
+                            >
+                                NEXA RELEASED
+                            </button>
+                            <button
+                                onClick={() => setFilter("rejected")}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "rejected"
+                                    ? "bg-red-500/20 text-red-500 border border-red-500/50"
+                                    : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
+                                    }`}
+                            >
+                                REJECTED
+                            </button>
+                        </>
+                    )}
                 </div>
             </header>
 
@@ -129,7 +204,12 @@ export default function LedgerPage() {
                 <div className="space-y-6">
                     {/* Desktop View */}
                     <div className="hidden md:block bg-[#1a1b23] rounded-2xl border border-gray-800 overflow-hidden shadow-xl">
-                        <LedgerTable orders={orders} />
+                        <LedgerTable
+                            orders={orders}
+                            currentUser={user}
+                            onCheck={handleCheckOrder}
+                            onDecision={handleOrderDecision}
+                        />
                     </div>
 
                     {/* Mobile View */}

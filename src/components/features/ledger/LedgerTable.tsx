@@ -1,48 +1,173 @@
 import { Order } from "@/types/order";
+import { User } from "@/lib/api/auth";
 import { format } from "date-fns";
 import StatusBadge from "@/components/ui/StatusBadge";
+import { Check, ThumbsUp, ThumbsDown, Lock, ChevronDown, ChevronUp, ShieldCheck } from "lucide-react";
+import { useState, Fragment } from "react";
+import LifecycleViewer from "./LifecycleViewer";
 
 interface LedgerTableProps {
     orders: Order[];
+    currentUser?: User | null;
+    onCheck?: (orderId: string) => void;
+    onDecision?: (orderId: string, decision: 'APPROVE' | 'REJECT', reason?: string) => void;
 }
 
-export default function LedgerTable({ orders }: LedgerTableProps) {
+export default function LedgerTable({ orders, currentUser, onCheck, onDecision }: LedgerTableProps) {
+    const isAdminView = !!currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'SUPERADMIN');
+    const isSuperAdmin = currentUser?.role === 'SUPERADMIN';
+    const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+
+    const toggleExpanded = (orderId: string) => {
+        setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
+    };
+
     return (
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto min-h-[400px]">
             <table className="w-full text-left text-sm text-gray-400">
-                <thead className="bg-[#0f1016] text-gray-300 uppercase tracking-wilder text-xs font-semibold">
+                <thead className="bg-[#0f1016] text-gray-300 uppercase tracking-wider text-xs font-semibold sticky top-0 z-10 shadow-sm shadow-[#0f1016]">
                     <tr>
+                        {isAdminView && <th className="px-6 py-4 w-12"></th>}
                         <th className="px-6 py-4">Date</th>
+                        {isAdminView && <th className="px-6 py-4">User</th>}
                         <th className="px-6 py-4">Order ID</th>
-                        <th className="px-6 py-4">Transaction ID</th>
+                        <th className="px-6 py-4">Ref ID</th>
                         <th className="px-6 py-4 text-right">Amount (INR)</th>
                         <th className="px-6 py-4 text-right">Nexa</th>
                         <th className="px-6 py-4 text-center">Status</th>
+                        {isAdminView && <th className="px-6 py-4 text-center">Actions</th>}
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800">
-                    {orders.map((order) => (
-                        <tr key={order.id} className="hover:bg-gray-800/50 transition-colors">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                {format(new Date(order.createdAt), "MMM d, yyyy h:mm a")}
-                            </td>
-                            <td className="px-6 py-4 font-mono text-xs text-gray-300">
-                                {order.id}
-                            </td>
-                            <td className="px-6 py-4 font-mono text-xs">
-                                {order.transactionId || "-"}
-                            </td>
-                            <td className="px-6 py-4 text-right font-medium text-red-500">
-                                - ₹{order.amountINR.toFixed(2)}
-                            </td>
-                            <td className="px-6 py-4 text-right text-green-500 font-medium">
-                                + {order.nexaAmount.toLocaleString(undefined, { maximumFractionDigits: 4 })}
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                                <StatusBadge status={order.status} />
-                            </td>
-                        </tr>
-                    ))}
+                    {orders.map((order) => {
+                        const isLockedByMe = order.checkedBy === currentUser?.userId;
+                        const isLockedByOthers = order.checkedBy && order.checkedBy !== currentUser?.userId;
+                        const isExpanded = expandedOrderId === order.id;
+                        const hasLifecycle = order.lifecycle && order.lifecycle.length > 0;
+
+                        return (
+                            <Fragment key={order.id}>
+                                <tr className="hover:bg-gray-800/50 transition-colors">
+                                    {isAdminView && (
+                                        <td className="px-6 py-4">
+                                            {hasLifecycle && (
+                                                <button
+                                                    onClick={() => toggleExpanded(order.id)}
+                                                    className="text-gray-400 hover:text-white transition-colors"
+                                                >
+                                                    {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                                </button>
+                                            )}
+                                        </td>
+                                    )}
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        {format(new Date(order.createdAt), "MMM d, yyyy h:mm a")}
+                                    </td>
+                                    {isAdminView && (
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                {order.user?.picture ? (
+                                                    <img src={order.user.picture} alt="" className="w-8 h-8 rounded-full bg-gray-800 object-cover" />
+                                                ) : (
+                                                    <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center text-xs font-bold">
+                                                        {order.user?.name?.[0] || "U"}
+                                                    </div>
+                                                )}
+                                                <div className="flex flex-col">
+                                                    <span className="text-white font-medium">{order.user?.name || "Unknown"}</span>
+                                                    <span className="text-xs text-gray-500">{order.user?.email || "-"}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    )}
+                                    <td className="px-6 py-4 font-mono text-xs text-gray-300">
+                                        {order.id.slice(0, 8)}...
+                                    </td>
+                                    <td className="px-6 py-4 font-mono text-xs">
+                                        {order.transactionId ? order.transactionId : <span className="text-gray-600">-</span>}
+                                    </td>
+                                    <td className="px-6 py-4 text-right font-medium text-red-500">
+                                        ₹{order.amountINR.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                    </td>
+                                    <td className="px-6 py-4 text-right text-green-500 font-medium">
+                                        {order.nexaAmount.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <StatusBadge status={order.status} />
+                                    </td>
+                                    {isAdminView && (
+                                        <td className="px-6 py-4 text-center">
+                                            <div className="flex justify-center gap-2 flex-wrap">
+                                                {/* Check button - show if not locked OR if superadmin */}
+                                                {order.status === "VERIFICATION_PENDING" && (!isLockedByOthers || isSuperAdmin) && !isLockedByMe && (
+                                                    <button
+                                                        onClick={() => onCheck?.(order.id)}
+                                                        className="p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors relative"
+                                                        title={isSuperAdmin && isLockedByOthers ? "SUPERADMIN Override" : "Start Checking"}
+                                                    >
+                                                        <Check size={16} />
+                                                        {isSuperAdmin && isLockedByOthers && (
+                                                            <ShieldCheck size={10} className="absolute -top-1 -right-1 text-purple-400" />
+                                                        )}
+                                                    </button>
+                                                )}
+
+                                                {/* Approve/Reject buttons - show if locked by me OR if superadmin */}
+                                                {(order.status === "VERIFYING" || order.status === "VERIFICATION_PENDING") && (isLockedByMe || (isSuperAdmin && isLockedByOthers)) && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => onDecision?.(order.id, 'APPROVE')}
+                                                            className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors relative"
+                                                            title={isSuperAdmin && !isLockedByMe ? "SUPERADMIN Approve (Override)" : "Approve"}
+                                                        >
+                                                            <ThumbsUp size={16} />
+                                                            {isSuperAdmin && !isLockedByMe && (
+                                                                <ShieldCheck size={10} className="absolute -top-1 -right-1 text-purple-400" />
+                                                            )}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => onDecision?.(order.id, 'REJECT')}
+                                                            className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors relative"
+                                                            title={isSuperAdmin && !isLockedByMe ? "SUPERADMIN Reject (Override)" : "Reject"}
+                                                        >
+                                                            <ThumbsDown size={16} />
+                                                            {isSuperAdmin && !isLockedByMe && (
+                                                                <ShieldCheck size={10} className="absolute -top-1 -right-1 text-purple-400" />
+                                                            )}
+                                                        </button>
+                                                    </>
+                                                )}
+
+                                                {/* Locked by others indicator - hide for superadmin */}
+                                                {isLockedByOthers && !isSuperAdmin && (order.status === "VERIFYING" || order.status === "VERIFICATION_PENDING") && (
+                                                    <div className="flex items-center gap-1 text-xs text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded-full">
+                                                        <Lock size={12} />
+                                                        <span>Checking...</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Completed states */}
+                                                {["VERIFIED", "ADMIN_APPROVED", "RELEASE_PAYMENT", "PAYMENT_SUCCESS"].includes(order.status) && (
+                                                    <span className="text-xs text-emerald-500">Completed</span>
+                                                )}
+                                                {order.status === "REJECTED" && (
+                                                    <span className="text-xs text-red-500">Rejected</span>
+                                                )}
+                                            </div>
+                                        </td>
+                                    )}
+                                </tr>
+                                {/* Expandable lifecycle row */}
+                                {isAdminView && isExpanded && (
+                                    <tr key={`${order.id}-lifecycle`} className="bg-[#0a0b0f]">
+                                        <td colSpan={9} className="px-6 py-0">
+                                            <LifecycleViewer lifecycle={order.lifecycle} />
+                                        </td>
+                                    </tr>
+                                )}
+                            </Fragment>
+                        );
+                    })}
                 </tbody>
             </table>
         </div>

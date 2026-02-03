@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AuthService } from "@/lib/services/auth.service";
 import { ConfigService } from "@/lib/services/config.service";
+import { UPISelectorService } from "@/lib/services/upi-selector.service";
 import { UPIUrlBuilder } from "@/lib/utils/upi-url-builder";
 import { prisma } from "@/lib/prisma";
 
@@ -37,19 +38,18 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, message: "Server misconfiguration: UPI model missing" }, { status: 500 });
         }
 
-        const activeUPIs = await prisma.upi.findMany({
-            where: { isActive: true }
-        });
-        console.log(`Found ${activeUPIs.length} active UPIs:`, activeUPIs);
+        // Select UPI using intelligent routing
+        const selectedUPI = await UPISelectorService.selectUPI();
+        console.log('Selected UPI:', selectedUPI);
 
-        if (activeUPIs.length === 0) {
-            // Fallback check - print all UPIs
-            const alld = await prisma.upi.findMany();
-            console.log("All UPIs in DB:", alld);
-            return NextResponse.json({ success: false, message: "No active payment methods available" }, { status: 503 });
+        if (!selectedUPI) {
+            console.warn('No UPI available (either inactive, outside schedule, or none exist)');
+            return NextResponse.json({
+                success: false,
+                message: "No payment methods available at this time. Please try again later."
+            }, { status: 503 });
         }
 
-        const selectedUPI = activeUPIs[Math.floor(Math.random() * activeUPIs.length)];
         const randomQr = selectedUPI.vpa;
 
         // Create Order
@@ -107,26 +107,38 @@ export async function GET(req: NextRequest) {
         const page = parseInt(searchParams.get("page") || "1");
         const limit = parseInt(searchParams.get("limit") || "10");
         const skip = (page - 1) * limit;
+        const statusFilter = searchParams.get("status");
+
+        const isAdmin = user.role === "ADMIN" || user.role === "SUPERADMIN";
+
+        // Admin View: Fetch all orders (with user details)
+        // User View: Fetch only own orders
+        let whereClause: any = isAdmin ? {} : { userId: user.id };
+
+        // Apply admin status filtering on server side
+        if (isAdmin && statusFilter) {
+            if (statusFilter === "pending") {
+                whereClause.status = { in: ["VERIFICATION_PENDING", "VERIFYING", "ADMIN_APPROVED"] };
+            } else if (statusFilter === "released") {
+                whereClause.status = { in: ["RELEASE_PAYMENT", "PAYMENT_SUCCESS", "VERIFIED"] };
+            } else if (statusFilter === "rejected") {
+                whereClause.status = "REJECTED";
+            }
+        }
+
+        const includeClause = isAdmin ? { user: { select: { name: true, email: true, picture: true } } } : undefined;
 
         const [orders, total] = await Promise.all([
             prisma.order.findMany({
-                where: { userId: user.id },
+                where: whereClause,
                 orderBy: { createdAt: 'desc' },
                 skip,
                 take: limit,
-                select: {
-                    id: true,
-                    amountINR: true,
-                    nexaAmount: true,
-                    nexaPrice: true,
-                    status: true,
-                    paymentQrId: true,
-                    transactionId: true,
-                    createdAt: true,
-                    verifiedBy: true
-                }
+                include: includeClause, // Use include for relations
+                // select: ... // Can't use select and include together easily without nesting select inside include. 
+                // Let's use include for user and implicit select of order fields (or explicit if needed, but implicit is fine for now)
             }),
-            prisma.order.count({ where: { userId: user.id } })
+            prisma.order.count({ where: whereClause })
         ]);
 
         const hasMore = skip + orders.length < total;

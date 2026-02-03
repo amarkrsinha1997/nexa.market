@@ -11,6 +11,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { ROLES } from "@/lib/config/roles";
 import GoogleIcon from "@/components/icons/GoogleIcon";
 import ArrowBackIcon from "@/components/icons/ArrowBackIcon";
+import { LocalStorageUtils } from "@/lib/utils/storage";
 
 function LoginPageContent() {
     const router = useRouter();
@@ -37,8 +38,27 @@ function LoginPageContent() {
                 return;
             }
 
-            if (user.role === ROLES.ADMIN || user.role === ROLES.SUPERADMIN) {
-                router.push("/portal");
+            // Check preferred view from LocalStorage
+            const preferredView = LocalStorageUtils.getPreferredView();
+
+            if ((user.role === ROLES.ADMIN || user.role === ROLES.SUPERADMIN) && preferredView === "admin") {
+                router.push("/admin/dashboard");
+            } else if (user.role === ROLES.ADMIN || user.role === ROLES.SUPERADMIN) {
+                // Admin user but no preference or user preference -> verify if they have preference set, if not default to admin dashboard for first time?
+                // Actually user request says "keep the preference set... that what needs to be opened"
+                // If no preference, maybe default based on role usually, but let's stick to simple logic:
+                // If explicitly admin pref -> admin dash. Else -> user home (which has the switch button)
+
+                // Correction: The requirement is "keep the preference set... use that only for Admin".
+                // If I am admin and I last used admin portal, go there.
+                // If I am admin and I last used user portal, go there.
+                // If new admin login (no pref), maybe default to Admin Portal?
+                // Let's check if preferredView is null.
+                if (preferredView === null) {
+                    router.push("/admin/dashboard");
+                } else {
+                    router.push("/users/home");
+                }
             } else {
                 router.push("/users/home");
             }
@@ -69,8 +89,14 @@ function LoginPageContent() {
                     return;
                 }
 
+                const preferredView = LocalStorageUtils.getPreferredView();
+
                 if (loggedInUser.role === ROLES.ADMIN || loggedInUser.role === ROLES.SUPERADMIN) {
-                    router.push("/portal");
+                    if (preferredView === "admin" || preferredView === null) {
+                        router.push("/admin/dashboard");
+                    } else {
+                        router.push("/users/home");
+                    }
                 } else if (result.isNewUser) {
                     router.push("/users/home?welcome=true");
                 } else {

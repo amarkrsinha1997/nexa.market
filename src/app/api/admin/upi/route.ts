@@ -17,11 +17,24 @@ async function verifyAdmin(req: NextRequest) {
     }
 }
 
+// Validate time format (HH:mm)
+function isValidTimeFormat(time: string | null | undefined): boolean {
+    if (!time) return true; // null/undefined is valid (no schedule)
+    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+    return timeRegex.test(time);
+}
+
 export async function GET(req: NextRequest) {
     if (!await verifyAdmin(req)) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
     try {
-        const upis = await prisma.upi.findMany({ orderBy: { createdAt: 'desc' } });
+        const upis = await prisma.upi.findMany({
+            orderBy: [
+                { isActive: 'desc' },
+                { priority: 'asc' },
+                { createdAt: 'desc' }
+            ]
+        });
         return NextResponse.json({ success: true, data: { upis } });
     } catch (error) {
         return NextResponse.json({ success: false, message: "Failed to fetch UPIs" }, { status: 500 });
@@ -32,15 +45,45 @@ export async function POST(req: NextRequest) {
     if (!await verifyAdmin(req)) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
     try {
-        const { vpa, merchantName } = await req.json();
+        const {
+            vpa,
+            merchantName,
+            scheduleStart,
+            scheduleEnd,
+            priority,
+            notes,
+            maxDailyLimit
+        } = await req.json();
+
         if (!vpa) return NextResponse.json({ success: false, message: "VPA is required" }, { status: 400 });
 
+        // Validate time formats
+        if (!isValidTimeFormat(scheduleStart) || !isValidTimeFormat(scheduleEnd)) {
+            return NextResponse.json({
+                success: false,
+                message: "Invalid time format. Use HH:mm (e.g., 09:00, 17:30)"
+            }, { status: 400 });
+        }
+
         const upi = await prisma.upi.create({
-            data: { vpa, merchantName, isActive: true }
+            data: {
+                vpa,
+                merchantName,
+                isActive: true,
+                scheduleStart: scheduleStart || null,
+                scheduleEnd: scheduleEnd || null,
+                priority: priority !== undefined ? parseInt(priority) : 0,
+                notes: notes || null,
+                maxDailyLimit: maxDailyLimit ? parseFloat(maxDailyLimit) : null
+            }
         });
         return NextResponse.json({ success: true, data: { upi } });
-    } catch (error) {
-        return NextResponse.json({ success: false, message: "Failed to create UPI" }, { status: 500 });
+    } catch (error: any) {
+        console.error("Create UPI error:", error);
+        return NextResponse.json({
+            success: false,
+            message: error.code === 'P2002' ? "UPI ID already exists" : "Failed to create UPI"
+        }, { status: 500 });
     }
 }
 
@@ -49,9 +92,11 @@ export async function PATCH(req: NextRequest) {
 
     try {
         const { id, isActive } = await req.json();
+        if (!id) return NextResponse.json({ success: false, message: "ID is required" }, { status: 400 });
+
         const upi = await prisma.upi.update({
             where: { id },
-            data: { isActive }
+            data: { isActive: !!isActive }
         });
         return NextResponse.json({ success: true, data: { upi } });
     } catch (error) {

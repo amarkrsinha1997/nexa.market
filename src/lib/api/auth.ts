@@ -16,6 +16,7 @@ export interface User {
     referralCode: string;
     isEarlyUser: boolean;
     role: string;
+    // other fields...
     walletAddressChangeCount: number;
     lastLoginAt: string | null;
     createdAt: string;

@@ -41,6 +41,8 @@ model Order {
   transactionId String? // User provided Ref/UTR
 
   verifiedBy String? // Admin ID who verified
+  checkedBy  String? // Admin ID who is checking/locking the order
+  lifecycle  Json? // Audit log of status changes
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -50,8 +52,10 @@ enum OrderStatus {
   ORDER_CREATED // Initial order creation
   PAYMENT_INIT // Payment initiated by user
   VERIFICATION_PENDING // Payment submitted, awaiting admin verification
-  VERIFYING // Admin is verifying the payment
-  VERIFIED // Payment verified by admin
+  VERIFYING // Admin is verifying the payment (Locked)
+  ADMIN_APPROVED // Admin has approved - ready for payment release
+  REJECTED // Admin rejected the payment
+  VERIFIED // (Legacy/Alternative) Payment verified
   RELEASE_PAYMENT // Payment release in progress
   PAYMENT_SUCCESS // Payment successfully released
   PAYMENT_FAILED // Payment verification failed
@@ -64,10 +68,24 @@ model AppConfig {
 }
 
 model Upi {
-  id           String   @id @default(uuid())
-  vpa          String   @unique // Virtual Payment Address (e.g. merchant@upi)
+  id           String  @id @default(uuid())
+  vpa          String  @unique // Virtual Payment Address (e.g. merchant@upi)
   merchantName String?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  isActive     Boolean @default(true)
+
+  // Scheduling fields - time in HH:mm format (e.g., "09:00", "17:00")
+  scheduleStart String? // Time when UPI becomes active each day
+  scheduleEnd   String? // Time when UPI becomes inactive each day
+
+  // Rotation & tracking
+  priority   Int       @default(0) // Lower number = higher priority
+  lastUsedAt DateTime? // Track when last selected
+  usageCount Int       @default(0) // Total times used
+
+  // Metadata
+  notes         String?
+  maxDailyLimit Float? // Optional daily transaction limit
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

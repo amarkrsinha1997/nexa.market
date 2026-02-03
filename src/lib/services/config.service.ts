@@ -32,4 +32,23 @@ export class ConfigService {
         const nexaPrice = await this.getNexaPrice();
         return amountINR / nexaPrice;
     }
+
+    /**
+     * Set NEXA price from Price per Crore
+     * @param pricePerCrore Price in INR for 1 Crore (10,000,000) NEXA
+     */
+    static async setNexaPrice(pricePerCrore: number): Promise<void> {
+        const pricePerOneNexa = pricePerCrore / 10000000;
+
+        await prisma.appConfig.upsert({
+            where: { key: "NEXA_PRICE_INR" },
+            update: { value: pricePerOneNexa.toString() },
+            create: {
+                key: "NEXA_PRICE_INR",
+                value: pricePerOneNexa.toString(),
+                description: "Price of 1 NEXA token in INR"
+            }
+        });
+    }
 }
+

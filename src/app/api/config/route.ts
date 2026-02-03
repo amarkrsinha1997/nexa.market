@@ -12,3 +12,20 @@ export async function GET() {
         return NextResponse.json({ success: false, message: "Failed to fetch config" }, { status: 500 });
     }
 }
+
+export async function POST(req: Request) {
+    try {
+        const body = await req.json();
+        const { pricePerCrore } = body;
+
+        if (!pricePerCrore || typeof pricePerCrore !== 'number') {
+            return NextResponse.json({ success: false, message: "Invalid pricePerCrore" }, { status: 400 });
+        }
+
+        await ConfigService.setNexaPrice(pricePerCrore);
+        return NextResponse.json({ success: true, message: "Price updated successfully" });
+    } catch (error) {
+        console.error("Config update failed", error);
+        return NextResponse.json({ success: false, message: "Failed to update config" }, { status: 500 });
+    }
+}
