@@ -10,20 +10,25 @@ datasource db {
 }
 
 model User {
-  id                    String    @id @default(uuid())
-  email                 String    @unique
-  name                  String?
-  role                  String    @default("USER") // ADMIN, USER
-  googleId              String?   @unique
-  picture               String?
-  refreshToken          String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-  dateOfBirth           DateTime?
-  phoneNumber           String?
-  nexaWalletAddress     String?
-  isOnboardingCompleted Boolean   @default(false)
-  orders                Order[]
+  id                       String    @id @default(uuid())
+  email                    String    @unique
+  name                     String?
+  username                 String?   @unique
+  role                     String    @default("USER") // ADMIN, USER
+  googleId                 String?   @unique
+  picture                  String?
+  refreshToken             String?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+  dateOfBirth              DateTime?
+  phoneNumber              String?
+  nexaWalletAddress        String?
+  isOnboardingCompleted    Boolean   @default(false)
+  referralCode             String?   @unique
+  isEarlyUser              Boolean   @default(false)
+  walletAddressChangeCount Int       @default(0)
+  lastLoginAt              DateTime?
+  orders                   Order[]
 }
 
 model Order {
@@ -38,6 +43,7 @@ model Order {
   status OrderStatus @default(ORDER_CREATED)
 
   paymentQrId   String // Which QR was shown
+  nexaAddress   String? // Frozen Nexa wallet address for this order
   transactionId String? // User provided Ref/UTR
 
   verifiedBy String? // Admin ID who verified
@@ -50,15 +56,11 @@ model Order {
 
 enum OrderStatus {
   ORDER_CREATED // Initial order creation
-  PAYMENT_INIT // Payment initiated by user
   VERIFICATION_PENDING // Payment submitted, awaiting admin verification
   VERIFYING // Admin is verifying the payment (Locked)
   ADMIN_APPROVED // Admin has approved - ready for payment release
   REJECTED // Admin rejected the payment
-  VERIFIED // (Legacy/Alternative) Payment verified
   RELEASE_PAYMENT // Payment release in progress
-  PAYMENT_SUCCESS // Payment successfully released
-  PAYMENT_FAILED // Payment verification failed
 }
 
 model AppConfig {

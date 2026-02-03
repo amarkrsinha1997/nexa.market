@@ -1,14 +1,14 @@
-import { BadgeCheck, Clock, XCircle, MoreHorizontal } from "lucide-react";
+import { BadgeCheck, Clock, XCircle, MoreHorizontal, Lock as LockIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Enum matching Prisma Schema (roughly)
 export type OrderStatus =
     | "ORDER_CREATED"
-    | "PAYMENT_INIT"
-    | "PAYMENT_PENDING"
-    | "PAYMENT_FAILED"
-    | "PAYMENT_SUCCESS"
-    | "VERIFIED";
+    | "VERIFICATION_PENDING"
+    | "VERIFYING"
+    | "ADMIN_APPROVED"
+    | "REJECTED"
+    | "RELEASE_PAYMENT";
 
 const statusConfig: Record<OrderStatus, { color: string; icon: any; label: string }> = {
     ORDER_CREATED: {
@@ -16,30 +16,30 @@ const statusConfig: Record<OrderStatus, { color: string; icon: any; label: strin
         icon: MoreHorizontal,
         label: "Created"
     },
-    PAYMENT_INIT: {
-        color: "bg-blue-900/30 text-blue-400 border-blue-900/50",
-        icon: Clock,
-        label: "Initiated"
-    },
-    PAYMENT_PENDING: {
+    VERIFICATION_PENDING: {
         color: "bg-yellow-900/30 text-yellow-400 border-yellow-900/50",
         icon: Clock,
-        label: "Pending"
+        label: "Verifying"
     },
-    PAYMENT_FAILED: {
-        color: "bg-red-900/30 text-red-400 border-red-900/50",
-        icon: XCircle,
-        label: "Failed"
+    VERIFYING: {
+        color: "bg-purple-900/30 text-purple-400 border-purple-900/50",
+        icon: LockIcon,
+        label: "Locked"
     },
-    PAYMENT_SUCCESS: {
+    ADMIN_APPROVED: {
         color: "bg-green-900/30 text-green-400 border-green-900/50",
         icon: BadgeCheck,
-        label: "Paid"
+        label: "Approved"
     },
-    VERIFIED: {
+    REJECTED: {
+        color: "bg-red-900/30 text-red-400 border-red-900/50",
+        icon: XCircle,
+        label: "Rejected"
+    },
+    RELEASE_PAYMENT: {
         color: "bg-green-500/20 text-green-400 border-green-500/50",
         icon: BadgeCheck,
-        label: "Verified"
+        label: "Released"
     }
 };
 

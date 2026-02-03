@@ -9,29 +9,28 @@ export async function GET(req: NextRequest) {
         //   return new NextResponse('Unauthorized', { status: 401 });
         // }
 
-        // Threshold: 24 hours ago
-        const threshold = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        // Threshold: 30 minutes ago
+        const threshold = new Date(Date.now() - 30 * 60 * 1000);
 
-        // Update stale orders
+        // Find orders that are still in ORDER_CREATED status and older than 30 minutes
         const result = await prisma.order.updateMany({
             where: {
+                status: "ORDER_CREATED",
                 createdAt: {
                     lt: threshold
-                },
-                status: {
-                    in: ["ORDER_CREATED", "PAYMENT_INIT"]
                 }
             },
             data: {
-                status: "PAYMENT_FAILED"
+                status: "REJECTED"
             }
         });
 
         return NextResponse.json({
             success: true,
             data: {
-                failedOrdersCount: result.count,
-                threshold: threshold.toISOString()
+                expiredCount: result.count,
+                threshold: threshold.toISOString(),
+                message: `Expired ${result.count} stale orders`
             }
         });
 

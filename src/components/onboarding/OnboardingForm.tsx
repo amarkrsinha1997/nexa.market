@@ -7,6 +7,7 @@ import { CheckCircle2, AlertCircle } from "lucide-react";
 import DatePicker from "@/components/ui/DatePicker";
 import PhoneInput from "@/components/ui/PhoneInput";
 import NexaAddressInput from "@/components/ui/NexaAddressInput";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 export default function OnboardingForm() {
     const router = useRouter();
@@ -19,6 +20,8 @@ export default function OnboardingForm() {
     const [localPhoneNumber, setLocalPhoneNumber] = useState("");
     const [nexaAddress, setNexaAddress] = useState("");
     const [isAddressValid, setIsAddressValid] = useState(false);
+
+    const { refetch } = useAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -49,9 +52,8 @@ export default function OnboardingForm() {
             });
 
             if (response.success && response.data) {
-                // Update local auth state immediately so redirect logic in useAuth triggers
-                const { authApi } = require("@/lib/api/auth"); // Dynamic import to avoid circular dep if any
-                authApi.storeUser(response.data.user);
+                // Refresh the profile cache
+                await refetch();
 
                 // Force a hard navigation to ensure state is picked up
                 window.location.href = "/users/home";

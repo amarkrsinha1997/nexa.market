@@ -3,4 +3,5 @@ export const STORAGE_KEYS = {
     REFRESH_TOKEN: "refresh_token",
     USER_DATA: "user_data",
     PREFERRED_VIEW: "app_preference_view",
+    LAST_PROFILE_FETCH: "last_profile_fetch",
 } as const;

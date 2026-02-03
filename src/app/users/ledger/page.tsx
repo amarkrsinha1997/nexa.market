@@ -82,8 +82,8 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
         try {
             const res = await apiClient.post<{ data: Order }>(`/admin/orders/${orderId}/check`, {});
             if (res.success && res.data) {
-                // Update local state
-                setOrders(prev => prev.map(o => o.id === orderId ? { ...o, ...res.data } : o));
+                // Refetch to ensure UI consistency with backend
+                await fetchOrders(1);
             }
         } catch (error) {
             console.error("Failed to check order", error);
@@ -99,7 +99,8 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                 reason
             });
             if (res.success && res.data) {
-                setOrders(prev => prev.map(o => o.id === orderId ? { ...o, ...res.data } : o));
+                // Refetch to ensure UI consistency with backend
+                await fetchOrders(1);
             }
         } catch (error) {
             console.error("Failed to submit decision", error);

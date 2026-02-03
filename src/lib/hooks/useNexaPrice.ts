@@ -9,10 +9,21 @@ export function useNexaPrice(): number | null {
     const [price, setPrice] = useState<number | null>(null);
 
     useEffect(() => {
+        // Ensure scheduler is running
+        PriceSchedulerService.initialize();
+
         // Get initial cached price
         const cachedPrice = PriceSchedulerService.getCachedPrice();
         if (cachedPrice) {
             setPrice(cachedPrice);
+        } else {
+            // If no cache, force fetch immediately
+            (async () => {
+                const fetchedPrice = await PriceSchedulerService.forceFetch();
+                if (fetchedPrice) {
+                    setPrice(fetchedPrice);
+                }
+            })();
         }
 
         // Listen for price updates

@@ -19,10 +19,14 @@ export async function POST(req: NextRequest) {
         if (!user) return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
 
         const body = await req.json();
-        const { amountINR } = body;
+        const { amountINR, nexaAddress } = body;
 
         if (!amountINR || amountINR <= 0) {
             return NextResponse.json({ success: false, message: "Invalid amount" }, { status: 400 });
+        }
+
+        if (!nexaAddress) {
+            return NextResponse.json({ success: false, message: "Nexa address is required" }, { status: 400 });
         }
 
         // Fetch NEXA price and calculate amount
@@ -31,12 +35,6 @@ export async function POST(req: NextRequest) {
 
         // Select Random Active QR from DB
         console.log("Fetching active UPIs...");
-
-        // Verify model exists on client
-        if (!prisma.upi) {
-            console.error("prisma.upi is undefined! Check generated client.");
-            return NextResponse.json({ success: false, message: "Server misconfiguration: UPI model missing" }, { status: 500 });
-        }
 
         // Select UPI using intelligent routing
         const selectedUPI = await UPISelectorService.selectUPI();
@@ -60,6 +58,7 @@ export async function POST(req: NextRequest) {
                 nexaAmount: parseFloat(nexaAmount.toFixed(2)),
                 nexaPrice: nexaPrice,
                 paymentQrId: randomQr,
+                nexaAddress: nexaAddress,
                 status: "ORDER_CREATED"
             }
         });
@@ -120,7 +119,7 @@ export async function GET(req: NextRequest) {
             if (statusFilter === "pending") {
                 whereClause.status = { in: ["VERIFICATION_PENDING", "VERIFYING", "ADMIN_APPROVED"] };
             } else if (statusFilter === "released") {
-                whereClause.status = { in: ["RELEASE_PAYMENT", "PAYMENT_SUCCESS", "VERIFIED"] };
+                whereClause.status = { in: ["ADMIN_APPROVED", "RELEASE_PAYMENT"] };
             } else if (statusFilter === "rejected") {
                 whereClause.status = "REJECTED";
             }

@@ -6,11 +6,11 @@ import { apiClient } from "@/lib/api/client";
 import PhoneInput from "@/components/ui/PhoneInput";
 import Link from "next/link";
 import CopyButton from "@/components/ui/CopyButton";
-import { Save, User as UserIcon, Calendar, Mail, Wallet, ChevronRight } from "lucide-react";
+import { Save, User as UserIcon, Calendar, Mail, Wallet, ChevronRight, LogOut } from "lucide-react";
 import { format } from "date-fns";
 
 export default function ProfilePage() {
-    const { user, loading, refetch } = useAuth();
+    const { user, loading, refetch, logout } = useAuth();
 
     // Phone State
     const [countryCode, setCountryCode] = useState("+1");
@@ -93,7 +93,7 @@ export default function ProfilePage() {
 
                     <div className="space-y-1">
                         <label className="text-xs font-medium text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                            <Calendar size={12} /> Joined
+                            <Calendar size={12} /> Member Since
                         </label>
                         <div className="bg-[#0f1016] p-3 rounded-lg text-gray-300 text-sm border border-gray-800 hover:border-gray-700 transition-colors">
                             {user.createdAt ? format(new Date(user.createdAt), 'MMMM d, yyyy') : 'N/A'}
@@ -154,6 +154,21 @@ export default function ProfilePage() {
                         {isSaving ? "Saving..." : <><Save size={18} /> Update Phone Number</>}
                     </button>
                 </div>
+            </div>
+
+            {/* Logout Button */}
+            <div className="px-4">
+                <button
+                    onClick={() => {
+                        if (confirm("Are you sure you want to log out? This will clear all session data.")) {
+                            logout();
+                        }
+                    }}
+                    className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-500 font-semibold py-3 rounded-xl border border-red-500/20 transition-all flex items-center justify-center gap-2"
+                >
+                    <LogOut size={18} />
+                    Logout
+                </button>
             </div>
         </div>
     );

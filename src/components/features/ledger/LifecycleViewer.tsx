@@ -42,11 +42,8 @@ export default function LifecycleViewer({ lifecycle }: LifecycleViewerProps) {
     };
 
     return (
-        <div className="space-y-3 py-4 px-6 bg-[#0f1016] rounded-lg">
-            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                Order History
-            </h4>
-            <div className="space-y-3">
+        <div className="space-y-2 py-3 px-4 bg-[#0f1016] rounded-xl border border-gray-800/50">
+            <div className="space-y-2">
                 {lifecycle.map((event, index) => (
                     <div
                         key={index}

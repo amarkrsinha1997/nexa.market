@@ -19,13 +19,17 @@ export interface Order {
     status: string;
     paymentQrId: string;
     transactionId: string | null;
+    nexaAddress?: string | null;
     verifiedBy?: string | null;
     checkedBy?: string | null;
-    name: string | null;
-    email: string;
-    picture: string | null;
-    phoneNumber?: string | null;
-};
-lifecycle ?: LifecycleEvent[]; // Strongly typed lifecycle
-createdAt: string;
+    user?: {
+        name: string;
+        email: string;
+        picture?: string | null;
+        phoneNumber?: string | null;
+    };
+    lifecycle?: LifecycleEvent[];
+    createdAt: string;
+    updatedAt: string;
 }
+

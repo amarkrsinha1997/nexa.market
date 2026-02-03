@@ -1,23 +1,26 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verifyAdminRequest } from "@/lib/utils/admin-auth";
 
 export async function POST(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const body = await req.json();
-        const { userId, decision, reason } = body;
-        // decision: 'APPROVE' | 'REJECT'
-
-        if (!userId || !decision) {
-            return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
+        // 1. Verify Admin Auth
+        const authResult = await verifyAdminRequest(req);
+        if (authResult instanceof NextResponse) {
+            return authResult;
         }
 
-        // Verify admin role
-        const admin = await prisma.user.findUnique({ where: { id: userId } });
-        if (!admin || (admin.role !== "ADMIN" && admin.role !== "SUPERADMIN")) {
-            return NextResponse.json({ success: false, message: "Unauthorized: Admin access required" }, { status: 403 });
+        const { user: admin } = authResult;
+
+        const body = await req.json();
+        const { decision, reason } = body;
+        // decision: 'APPROVE' | 'REJECT'
+
+        if (!decision) {
+            return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
         }
 
         const resolvedParams = await params;
@@ -29,8 +32,8 @@ export async function POST(
         }
 
         // Validate Lock - Allow SUPERADMIN to override
-        const isSuperadminOverride = order.checkedBy !== userId && admin.role === "SUPERADMIN";
-        if (order.checkedBy !== userId && admin.role !== "SUPERADMIN") {
+        const isSuperadminOverride = order.checkedBy !== admin.id && admin.role === "SUPERADMIN";
+        if (order.checkedBy !== admin.id && admin.role !== "SUPERADMIN") {
             return NextResponse.json({ success: false, message: "You are not the checking admin for this order" }, { status: 403 });
         }
 

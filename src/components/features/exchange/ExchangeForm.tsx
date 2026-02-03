@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowDown, IndianRupee, Wallet, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowDown, IndianRupee, Wallet, Loader2, Copy } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { apiClient } from "@/lib/api/client";
 import { useNexaPrice } from "@/lib/hooks/useNexaPrice";
+import { useAuth } from "@/lib/hooks/useAuth";
+import NexaAddressInput from "@/components/ui/NexaAddressInput";
 
 interface ExchangeFormProps { }
 
@@ -13,7 +15,21 @@ export default function ExchangeForm(props: ExchangeFormProps) {
     const router = useRouter();
     const [amount, setAmount] = useState<string>("");
     const [creatingOrder, setCreatingOrder] = useState(false);
+    const [nexaAddress, setNexaAddress] = useState("");
+    const [isWalletValid, setIsWalletValid] = useState(false);
+    const [isEditingWallet, setIsEditingWallet] = useState(false);
+    const [isSavingWallet, setIsSavingWallet] = useState(false);
+
+    const { user, refetch } = useAuth();
     const nexaPrice = useNexaPrice(); // Use the hook for automatic price updates
+
+    // Load initial wallet from user profile
+    useEffect(() => {
+        if (user?.nexaWalletAddress) {
+            setNexaAddress(user.nexaWalletAddress);
+            setIsWalletValid(true);
+        }
+    }, [user]);
 
     // Price is INR per NEXA. So Amount / Price = Nexa Count
     // Example: 500 INR / 0.00005 = 10,000,000
@@ -26,10 +42,14 @@ export default function ExchangeForm(props: ExchangeFormProps) {
     const estimatedNexa = amount ? calculateNexa(parseFloat(amount)).toLocaleString(undefined, { maximumFractionDigits: 4 }) : "0";
 
     const handleBuyNexa = async () => {
-        if (!amount) return;
+        if (!amount || !nexaAddress) return;
         setCreatingOrder(true);
         try {
-            const res = await apiClient.post<any>("/orders", { amountINR: parseFloat(amount) });
+            // Send nexaAddress explicitly to freeze it for this order
+            const res = await apiClient.post<any>("/orders", {
+                amountINR: parseFloat(amount),
+                nexaAddress: nexaAddress
+            });
             if (res.success && res.data?.orderId) {
                 router.push(`/users/payment/${res.data.orderId}`);
             }
@@ -102,13 +122,76 @@ export default function ExchangeForm(props: ExchangeFormProps) {
                 </div>
             </div>
 
+            {/* Wallet Address Section */}
+            <div className={`space-y-2 pt-2 border-t border-gray-800 ${!amount ? 'opacity-50' : ''}`}>
+                <div className="flex justify-between items-center">
+                    <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Destination Wallet</label>
+                    <button
+                        onClick={async () => {
+                            if (isEditingWallet && nexaAddress !== user?.nexaWalletAddress) {
+                                setIsSavingWallet(true);
+                                try {
+                                    await apiClient.patch("/user/profile", { nexaWalletAddress: nexaAddress });
+                                    await refetch();
+                                } catch (error) {
+                                    console.error("Failed to save wallet", error);
+                                } finally {
+                                    setIsSavingWallet(false);
+                                }
+                            }
+                            setIsEditingWallet(!isEditingWallet);
+                        }}
+                        disabled={isSavingWallet}
+                        className="text-xs text-blue-500 hover:text-blue-400 disabled:opacity-50"
+                    >
+                        {isSavingWallet ? "Saving..." : (isEditingWallet ? "Done" : (nexaAddress ? "Change" : "Add Wallet"))}
+                    </button>
+                </div>
+
+                {isEditingWallet ? (
+                    <NexaAddressInput
+                        value={nexaAddress}
+                        onChange={(val, valid) => {
+                            setNexaAddress(val);
+                            setIsWalletValid(valid);
+                        }}
+                        showCopy
+                    />
+                ) : (
+                    <div className="bg-[#0f1016] rounded-xl p-3 border border-gray-800 flex items-start gap-3">
+                        <div className="bg-blue-500/10 p-2 rounded-lg shrink-0">
+                            <Wallet size={18} className="text-blue-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            {nexaAddress ? (
+                                <>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-white text-sm font-mono break-all">
+                                            {nexaAddress}
+                                        </p>
+                                        <button
+                                            onClick={() => navigator.clipboard.writeText(nexaAddress)}
+                                            className="text-gray-500 hover:text-white shrink-0"
+                                        >
+                                            <Copy size={12} />
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <p className="text-gray-500 text-sm italic">No wallet address set</p>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
             {/* Pay Button */}
             <button
                 onClick={handleBuyNexa}
-                disabled={!amount || parseFloat(amount) <= 0 || creatingOrder}
+                disabled={!amount || parseFloat(amount) <= 0 || creatingOrder || !nexaAddress || !isWalletValid}
                 className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
             >
-                {creatingOrder ? <Loader2 className="animate-spin" /> : <><Wallet size={20} /> Buy Nexa</>}
+                {creatingOrder ? <Loader2 className="animate-spin" /> : <><Wallet size={20} /> {nexaAddress ? "Buy Nexa" : "Add Wallet to Buy"}</>}
             </button>
         </div>
     );

@@ -38,7 +38,7 @@ export async function GET(
             .setPayeeName("nexa.org")
             .setAmount(order.amountINR)
             .setCurrency("INR")
-            .setTransactionNote(`${order.user.email} | Order: ${order.id.slice(0, 8)}`)
+            .setTransactionNote(`Order: ${order.id.slice(0, 8)} | ${order.user.email}`)
             .setTransactionRef(order.id)
             .build();
 

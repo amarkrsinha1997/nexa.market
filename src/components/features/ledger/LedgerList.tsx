@@ -30,8 +30,23 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision }:
                 const isExpanded = expandedOrderId === order.id;
                 const hasLifecycle = order.lifecycle && order.lifecycle.length > 0;
 
+                const handleCardClick = (e: React.MouseEvent) => {
+                    // Prevent navigation if clicking on buttons or expanded content
+                    if ((e.target as HTMLElement).closest('button')) return;
+
+                    if (order.status === 'ORDER_CREATED') {
+                        window.location.href = `/users/payment/${order.id}`;
+                    } else {
+                        window.location.href = `/users/orders/${order.id}`;
+                    }
+                };
+
                 return (
-                    <div key={order.id} className="bg-[#1a1b23] border border-gray-800 rounded-2xl p-4 space-y-3 shadow-lg">
+                    <div
+                        key={order.id}
+                        onClick={handleCardClick}
+                        className="bg-[#1a1b23] border border-gray-800 rounded-2xl p-4 space-y-3 shadow-lg active:scale-[0.98] transition-transform cursor-pointer"
+                    >
                         {/* User Info (Admin View Only) */}
                         {isAdminView && order.user && (
                             <div className="flex items-center gap-3 pb-3 border-b border-gray-800">
@@ -88,13 +103,37 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision }:
                             Paid Via: <span className="text-gray-400">{order.paymentQrId}</span>
                         </div>
 
+                        {/* Nexa Address (Destination) */}
+                        {order.nexaAddress && (
+                            <div className="bg-[#0f1016]/50 p-2.5 rounded-xl border border-gray-800/50 space-y-1">
+                                <label className="text-[10px] font-medium text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
+                                    <ShieldCheck size={10} className="text-blue-500" />
+                                    Frozen Destination
+                                </label>
+                                <div className="flex items-start gap-2">
+                                    <span className="text-xs font-mono text-gray-300 break-all flex-1 line-clamp-2 leading-relaxed">
+                                        {order.nexaAddress}
+                                    </span>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigator.clipboard.writeText(order.nexaAddress!);
+                                        }}
+                                        className="p-1 px-2 bg-gray-800 hover:bg-gray-700 rounded text-[10px] text-gray-400 transition-colors"
+                                    >
+                                        Copy
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Admin Actions */}
                         {isAdminView && (
                             <div className="pt-3 border-t border-gray-800 space-y-2">
                                 {/* Check Button */}
                                 {order.status === "VERIFICATION_PENDING" && (!isLockedByOthers || isSuperAdmin) && !isLockedByMe && (
                                     <button
-                                        onClick={() => onCheck?.(order.id)}
+                                        onClick={(e) => { e.stopPropagation(); onCheck?.(order.id); }}
                                         className="w-full flex items-center justify-center gap-2 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 px-4 py-2 rounded-lg transition-colors relative"
                                     >
                                         <Check size={16} />
@@ -109,7 +148,7 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision }:
                                 {(order.status === "VERIFYING" || order.status === "VERIFICATION_PENDING") && (isLockedByMe || (isSuperAdmin && isLockedByOthers)) && (
                                     <div className="flex gap-2">
                                         <button
-                                            onClick={() => onDecision?.(order.id, 'APPROVE')}
+                                            onClick={(e) => { e.stopPropagation(); onDecision?.(order.id, 'APPROVE'); }}
                                             className="flex-1 flex items-center justify-center gap-2 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 px-4 py-2 rounded-lg transition-colors relative"
                                         >
                                             <ThumbsUp size={16} />
@@ -119,7 +158,7 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision }:
                                             )}
                                         </button>
                                         <button
-                                            onClick={() => onDecision?.(order.id, 'REJECT')}
+                                            onClick={(e) => { e.stopPropagation(); onDecision?.(order.id, 'REJECT'); }}
                                             className="flex-1 flex items-center justify-center gap-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 px-4 py-2 rounded-lg transition-colors relative"
                                         >
                                             <ThumbsDown size={16} />
@@ -140,7 +179,7 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision }:
                                 )}
 
                                 {/* Completed States */}
-                                {["VERIFIED", "ADMIN_APPROVED", "RELEASE_PAYMENT", "PAYMENT_SUCCESS"].includes(order.status) && (
+                                {["ADMIN_APPROVED", "RELEASE_PAYMENT"].includes(order.status) && (
                                     <div className="text-center text-sm text-emerald-500">Completed</div>
                                 )}
                                 {order.status === "REJECTED" && (
@@ -153,14 +192,14 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision }:
                         {isAdminView && hasLifecycle && (
                             <>
                                 <button
-                                    onClick={() => toggleExpanded(order.id)}
-                                    className="w-full flex items-center justify-center gap-2 text-gray-400 hover:text-white text-sm py-2 transition-colors"
+                                    onClick={(e) => { e.stopPropagation(); toggleExpanded(order.id); }}
+                                    className="w-full flex items-center justify-center gap-2 text-gray-500 hover:text-white text-xs py-1 transition-colors"
                                 >
-                                    {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                    {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                                     {isExpanded ? "Hide" : "View"} Order History
                                 </button>
                                 {isExpanded && (
-                                    <div className="pt-2 border-t border-gray-800">
+                                    <div className="pt-2 border-t border-gray-800" onClick={(e) => e.stopPropagation()}>
                                         <LifecycleViewer lifecycle={order.lifecycle} />
                                     </div>
                                 )}

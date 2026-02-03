@@ -58,8 +58,25 @@ export const authApi = {
         }
     },
 
-    async getProfile(): Promise<ApiResponse<AuthResponse>> {
-        return await apiClient.get<AuthResponse>("/user/profile");
+    async getProfile(force: boolean = false): Promise<ApiResponse<AuthResponse>> {
+        if (!force) {
+            const storedUser = this.getStoredUser();
+            const lastFetch = localStorage.getItem(STORAGE_KEYS.LAST_PROFILE_FETCH);
+            const now = Date.now();
+
+            // Cache for 5 minutes
+            if (storedUser && lastFetch && now - parseInt(lastFetch) < 5 * 60 * 1000) {
+                console.log("[Auth] Returning cached profile");
+                return { success: true, data: { user: storedUser, isNewUser: false } };
+            }
+        }
+
+        const response = await apiClient.get<AuthResponse>("/user/profile");
+        if (response.success && response.data) {
+            this.storeUser(response.data.user);
+            localStorage.setItem(STORAGE_KEYS.LAST_PROFILE_FETCH, Date.now().toString());
+        }
+        return response;
     },
 
     /**
@@ -148,9 +165,7 @@ export const authApi = {
      * Logout user
      */
     logout(): void {
-        localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-        localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-        localStorage.removeItem(STORAGE_KEYS.USER_DATA);
+        localStorage.clear();
     },
 
     /**

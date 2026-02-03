@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { apiClient } from "@/lib/api/client";
-import { CheckCircle, IndianRupee, Loader2, ArrowLeft } from "lucide-react";
+import { CheckCircle, IndianRupee, Loader2, ArrowLeft, Wallet, Copy } from "lucide-react";
 import Link from "next/link";
 import PaymentQRCode from "@/components/features/payment/PaymentQRCode";
 import UPICopy from "@/components/features/payment/UPICopy";
@@ -59,46 +59,19 @@ export default function PaymentPage() {
         }
     };
 
+    useEffect(() => {
+        if (order && order.status !== "ORDER_CREATED") {
+            router.replace(`/users/orders/${id}`);
+        }
+    }, [order, id, router]);
+
     if (authLoading || loading) return <div className="p-10 text-center text-gray-500"><Loader2 className="animate-spin mx-auto mb-2" /> Loading Order...</div>;
     if (error) return <div className="p-10 text-center text-red-500">Error: {error}</div>;
     if (!order) return <div className="p-10 text-center">Order not found</div>;
 
-    const isVerificationPending = order.status === "VERIFICATION_PENDING";
-    const isVerified = order.status === "VERIFIED";
-    const isPaymentSuccess = order.status === "PAYMENT_SUCCESS";
-
-    if (isVerificationPending || isVerified || isPaymentSuccess) {
-        return (
-            <div className="max-w-md mx-auto space-y-6 pt-8 text-center px-4">
-                <div className="bg-[#1a1b23] rounded-2xl p-8 shadow-xl border border-gray-800 space-y-6 flex flex-col items-center">
-                    <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center">
-                        <CheckCircle size={40} className="text-green-500" />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold text-white mb-2">Payment Submitted</h1>
-                        <p className="text-gray-400 text-sm">
-                            Your payment is being verified by the admin. <br />
-                            Once verified, your <b>{order.nexaAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })} NEXA</b> tokens will be released.
-                        </p>
-                    </div>
-                    <div className="bg-[#0f1016] p-4 rounded-lg w-full text-left space-y-2 border border-gray-800">
-                        <div className="flex justify-between text-sm">
-                            <span className="text-gray-500">Order ID</span>
-                            <span className="text-gray-300 font-mono text-xs">{order.id.slice(0, 8)}...</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-gray-500">Status</span>
-                            <span className={`font-bold ${isPaymentSuccess ? 'text-green-500' : isVerified ? 'text-blue-500' : 'text-yellow-500'}`}>
-                                {order.status.replace(/_/g, ' ')}
-                            </span>
-                        </div>
-                    </div>
-                    <Link href="/users/home" className="text-blue-500 hover:text-blue-400 text-sm font-medium">
-                        Return to Dashboard
-                    </Link>
-                </div>
-            </div>
-        );
+    // Prevent render if redirecting (optional flickering might happen but safer)
+    if (order.status !== "ORDER_CREATED") {
+        return <div className="p-10 text-center text-gray-500"><Loader2 className="animate-spin mx-auto mb-2" /> Redirecting...</div>;
     }
 
     return (
@@ -128,6 +101,30 @@ export default function PaymentPage() {
                         </div>
                     </div>
                 </div>
+
+                {/* Destination Wallet */}
+                {order.nexaAddress && (
+                    <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-3 space-y-2">
+                        <label className="text-[10px] font-bold text-blue-400/80 uppercase tracking-widest flex items-center justify-center gap-1.5">
+                            <Wallet size={10} />
+                            Destination Wallet
+                        </label>
+                        <div className="flex items-center gap-2 bg-[#0f1016]/50 p-2 rounded-lg border border-gray-800/50">
+                            <p className="text-white text-xs font-mono break-all flex-1 text-center line-clamp-2">
+                                {order.nexaAddress}
+                            </p>
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(order.nexaAddress!);
+                                }}
+                                className="shrink-0 p-1.5 hover:bg-blue-500/10 text-gray-500 hover:text-blue-400 rounded transition-colors"
+                                title="Copy Address"
+                            >
+                                <Copy size={12} />
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* QR Code */}
                 <PaymentQRCode upiString={upiString} />

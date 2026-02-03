@@ -13,13 +13,22 @@ export async function GET(req: NextRequest) {
         const token = authHeader.split(" ")[1];
         const payload = await AuthService.verifyGoogleToken(token);
 
-        const user = await prisma.user.findUnique({
-            where: { email: payload.email }
+        // Lazy create user if not found (happens after DB reset)
+        const user = await prisma.user.upsert({
+            where: { email: payload.email },
+            update: {
+                googleId: payload.sub,
+                picture: payload.picture,
+                name: payload.name || "User"
+            },
+            create: {
+                email: payload.email,
+                name: payload.name || "User",
+                googleId: payload.sub,
+                picture: payload.picture,
+                role: "USER"
+            }
         });
-
-        if (!user) {
-            return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
-        }
 
         return NextResponse.json({ success: true, data: { user } });
     } catch (error: any) {
@@ -42,7 +51,7 @@ export async function PATCH(req: NextRequest) {
 
         const body = await req.json();
         console.log("Profile Update Payload:", body); // DEBUG LOG
-        const { dateOfBirth, phoneNumber, nexaWalletAddress } = body;
+        const { dateOfBirth, phoneNumber, nexaWalletAddress, username, referralCode, isEarlyUser } = body;
 
         // Validation
         if (nexaWalletAddress) {
@@ -65,6 +74,9 @@ export async function PATCH(req: NextRequest) {
                 dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
                 phoneNumber,
                 nexaWalletAddress,
+                username,
+                referralCode,
+                isEarlyUser,
                 isOnboardingCompleted: true
             }
         });

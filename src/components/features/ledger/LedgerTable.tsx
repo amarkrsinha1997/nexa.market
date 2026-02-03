@@ -32,6 +32,7 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision }
                         <th className="px-6 py-4">Payment Method</th>
                         {isAdminView && <th className="px-6 py-4">User</th>}
                         <th className="px-6 py-4">Order ID</th>
+                        <th className="px-6 py-4">Destination Wallet</th>
                         <th className="px-6 py-4">Ref ID</th>
                         <th className="px-6 py-4 text-right">Amount (INR)</th>
                         <th className="px-6 py-4 text-right">Nexa</th>
@@ -48,9 +49,18 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision }
 
                         return (
                             <Fragment key={order.id}>
-                                <tr className="hover:bg-gray-800/50 transition-colors">
+                                <tr
+                                    className="hover:bg-gray-800/50 transition-colors cursor-pointer"
+                                    onClick={() => {
+                                        if (order.status === 'ORDER_CREATED') {
+                                            window.location.href = `/users/payment/${order.id}`;
+                                        } else {
+                                            window.location.href = `/users/orders/${order.id}`;
+                                        }
+                                    }}
+                                >
                                     {isAdminView && (
-                                        <td className="px-6 py-4">
+                                        <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                                             {hasLifecycle && (
                                                 <button
                                                     onClick={() => toggleExpanded(order.id)}
@@ -90,6 +100,27 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision }
                                     <td className="px-6 py-4 font-mono text-xs text-gray-300">
                                         {order.id}
                                     </td>
+                                    <td className="px-6 py-4">
+                                        {order.nexaAddress ? (
+                                            <div className="flex items-center gap-2 group">
+                                                <span className="text-xs font-mono text-gray-400 break-all max-w-[200px] line-clamp-1">
+                                                    {order.nexaAddress}
+                                                </span>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigator.clipboard.writeText(order.nexaAddress!);
+                                                    }}
+                                                    className="opacity-0 group-hover:opacity-100 p-1 bg-gray-700 hover:bg-gray-600 rounded transition-opacity"
+                                                    title="Copy Address"
+                                                >
+                                                    <Check size={10} className="text-gray-300" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <span className="text-gray-600">-</span>
+                                        )}
+                                    </td>
                                     <td className="px-6 py-4 font-mono text-xs">
                                         {order.transactionId ? order.transactionId : <span className="text-gray-600">-</span>}
                                     </td>
@@ -103,7 +134,7 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision }
                                         <StatusBadge status={order.status} />
                                     </td>
                                     {isAdminView && (
-                                        <td className="px-6 py-4 text-center">
+                                        <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex justify-center gap-2 flex-wrap">
                                                 {/* Check button - show if not locked OR if superadmin */}
                                                 {order.status === "VERIFICATION_PENDING" && (!isLockedByOthers || isSuperAdmin) && !isLockedByMe && (
@@ -154,7 +185,7 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision }
                                                 )}
 
                                                 {/* Completed states */}
-                                                {["VERIFIED", "ADMIN_APPROVED", "RELEASE_PAYMENT", "PAYMENT_SUCCESS"].includes(order.status) && (
+                                                {["ADMIN_APPROVED", "RELEASE_PAYMENT"].includes(order.status) && (
                                                     <span className="text-xs text-emerald-500">Completed</span>
                                                 )}
                                                 {order.status === "REJECTED" && (

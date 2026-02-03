@@ -77,13 +77,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const handleOnboardingRedirect = (u: User) => {
-        if (pathname) {
-            const isOnboardingPage = pathname.includes("/users/onboarding");
-            if (!u.isOnboardingCompleted && !isOnboardingPage) {
-                router.push("/users/onboarding");
-            } else if (u.isOnboardingCompleted && isOnboardingPage) {
-                router.push("/users/home");
+        if (!pathname) return;
+
+        const publicRoutes = ["/login", "/", "/register", "/terms", "/privacy"];
+        const isPublic = publicRoutes.some(route => pathname === route || pathname.startsWith(route + "/"));
+        if (isPublic) return;
+
+        const isOnboardingPage = pathname.includes("/users/onboarding");
+
+        if (!u.isOnboardingCompleted && !isOnboardingPage) {
+            // Save the intended destination if it's not onboarding or home
+            if (pathname !== "/users/home") {
+                localStorage.setItem("post_onboarding_redirect", pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : ""));
             }
+            router.push("/users/onboarding");
+        } else if (u.isOnboardingCompleted && isOnboardingPage) {
+            const redirectPath = localStorage.getItem("post_onboarding_redirect") || "/users/home";
+            localStorage.removeItem("post_onboarding_redirect");
+            router.push(redirectPath);
         }
     };
 
@@ -124,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const refetch = async () => {
-        const profileRes = await authApi.getProfile();
+        const profileRes = await authApi.getProfile(true); // Force refresh
         if (profileRes.success && profileRes.data) {
             setUser(profileRes.data.user);
             authApi.storeUser(profileRes.data.user);
@@ -142,6 +153,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Fetch on mount only
         checkAuth();
     }, []);
+
+    // Enforce onboarding redirect on every route change
+    useEffect(() => {
+        if (!loading && user) {
+            handleOnboardingRedirect(user);
+        }
+    }, [pathname, user, loading]);
 
     return (
         <AuthContext.Provider value={{
