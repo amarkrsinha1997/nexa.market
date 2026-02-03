@@ -126,7 +126,7 @@ export async function GET(req: NextRequest) {
             }
         }
 
-        const includeClause = isAdmin ? { user: { select: { name: true, email: true, picture: true } } } : undefined;
+        const includeClause = isAdmin ? { user: { select: { name: true, email: true, picture: true, phoneNumber: true } } } : undefined;
 
         const [orders, total] = await Promise.all([
             prisma.order.findMany({

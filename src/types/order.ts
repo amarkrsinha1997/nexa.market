@@ -21,11 +21,11 @@ export interface Order {
     transactionId: string | null;
     verifiedBy?: string | null;
     checkedBy?: string | null;
-    user?: {
-        name: string | null;
-        email: string;
-        picture: string | null;
-    };
-    lifecycle?: LifecycleEvent[]; // Strongly typed lifecycle
-    createdAt: string;
+    name: string | null;
+    email: string;
+    picture: string | null;
+    phoneNumber?: string | null;
+};
+lifecycle ?: LifecycleEvent[]; // Strongly typed lifecycle
+createdAt: string;
 }

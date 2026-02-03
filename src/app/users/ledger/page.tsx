@@ -80,7 +80,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
     const handleCheckOrder = async (orderId: string) => {
         if (!user) return;
         try {
-            const res = await apiClient.post<{ data: Order }>(`/admin/orders/${orderId}/check`, { userId: user.userId });
+            const res = await apiClient.post<{ data: Order }>(`/admin/orders/${orderId}/check`, {});
             if (res.success && res.data) {
                 // Update local state
                 setOrders(prev => prev.map(o => o.id === orderId ? { ...o, ...res.data } : o));
@@ -95,7 +95,6 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
         if (!user) return;
         try {
             const res = await apiClient.post<{ data: Order }>(`/admin/orders/${orderId}/decision`, {
-                userId: user.userId,
                 decision,
                 reason
             });
@@ -129,7 +128,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                 </h1>
 
                 {/* Filter Buttons */}
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar mask-gradient md:flex-wrap md:overflow-visible md:pb-0">
                     {!adminView ? (
                         <>
                             <button
@@ -213,7 +212,12 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                     </div>
 
                     {/* Mobile View */}
-                    <LedgerList orders={orders} />
+                    <LedgerList
+                        orders={orders}
+                        currentUser={user}
+                        onCheck={handleCheckOrder}
+                        onDecision={handleOrderDecision}
+                    />
 
                     {hasMore && (
                         <div className="flex justify-center pb-8">

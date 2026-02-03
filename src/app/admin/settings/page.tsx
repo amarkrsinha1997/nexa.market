@@ -40,7 +40,6 @@ export default function AdminSettingsPage() {
         <div className="p-8 max-w-3xl mx-auto space-y-8">
             <header>
                 <h1 className="text-2xl font-bold text-white">Admin Settings</h1>
-                <p className="text-gray-400 text-sm mt-1">Configure system parameters and preferences</p>
             </header>
 
             <div className="space-y-6">
@@ -106,7 +105,6 @@ export default function AdminSettingsPage() {
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-white">Switch to User View</h3>
-                                    <p className="text-gray-400 text-sm">Access the application as a regular user</p>
                                 </div>
                             </div>
                             <ArrowLeft className="rotate-180 text-gray-500 group-hover:text-white group-hover:translate-x-1 transition-all" />

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useRole } from "@/lib/hooks/useRole";
-import { Loader2, FileText, Settings, User } from "lucide-react";
+import { Loader2, FileText, Settings, User, Wallet } from "lucide-react";
 import Link from "next/link";
 import { LocalStorageUtils } from "@/lib/utils/storage";
 
@@ -43,6 +43,7 @@ export default function AdminLayout({
 
     const navItems = [
         { name: "Ledger", href: "/admin/ledger", icon: FileText },
+        { name: "UPI", href: "/admin/upi", icon: Wallet },
         { name: "Profile", href: "/admin/profile", icon: User },
         { name: "Settings", href: "/admin/settings", icon: Settings },
     ];
@@ -71,8 +72,8 @@ export default function AdminLayout({
                                 key={item.name}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
-                                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                                    : "text-gray-400 hover:text-white hover:bg-white/5"
                                     }`}
                             >
                                 <Icon size={20} />

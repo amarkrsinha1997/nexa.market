@@ -61,38 +61,51 @@ export class UPISelectorService {
                 return null;
             }
 
-            // Filter by schedule
-            const availableUPIs = upis.filter(upi =>
+            // 1. Filter by schedule
+            const scheduledUPIs = upis.filter(upi =>
                 this.isWithinSchedule(upi.scheduleStart, upi.scheduleEnd)
             );
 
-            if (availableUPIs.length === 0) {
-                console.warn('No UPIs available within current schedule');
-                return null;
+            // 2. If scheduled UPIs exist, prioritize them
+            if (scheduledUPIs.length > 0) {
+                const selectedUPI = scheduledUPIs[0];
+                await this.updateUsage(selectedUPI.id);
+                return this.mapToResult(selectedUPI);
             }
 
-            // Select the first one (already sorted by priority and lastUsedAt)
-            const selectedUPI = availableUPIs[0];
+            // 3. Fallback: Look for a "Main" fallback UPI
+            const fallbackUPI = upis.find(upi => upi.isFallback);
 
-            // Update usage tracking
-            await prisma.upi.update({
-                where: { id: selectedUPI.id },
-                data: {
-                    lastUsedAt: new Date(),
-                    usageCount: { increment: 1 }
-                }
-            });
+            if (fallbackUPI) {
+                console.log('Using Fallback UPI as no scheduled UPIs are valid');
+                await this.updateUsage(fallbackUPI.id);
+                return this.mapToResult(fallbackUPI);
+            }
 
-            return {
-                id: selectedUPI.id,
-                vpa: selectedUPI.vpa,
-                merchantName: selectedUPI.merchantName
-            };
-
+            console.warn('No UPIs available within current schedule and no fallback configured');
+            return null;
         } catch (error) {
             console.error('UPI selection failed:', error);
             return null;
         }
+    }
+
+    private static async updateUsage(id: string) {
+        await prisma.upi.update({
+            where: { id },
+            data: {
+                lastUsedAt: new Date(),
+                usageCount: { increment: 1 }
+            }
+        });
+    }
+
+    private static mapToResult(upi: any) {
+        return {
+            id: upi.id,
+            vpa: upi.vpa,
+            merchantName: upi.merchantName
+        };
     }
 
     /**

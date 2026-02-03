@@ -72,6 +72,7 @@ model Upi {
   vpa          String  @unique // Virtual Payment Address (e.g. merchant@upi)
   merchantName String?
   isActive     Boolean @default(true)
+  isFallback   Boolean @default(false) // If true, this UPI is used when no scheduled UPI is available
 
   // Scheduling fields - time in HH:mm format (e.g., "09:00", "17:00")
   scheduleStart String? // Time when UPI becomes active each day

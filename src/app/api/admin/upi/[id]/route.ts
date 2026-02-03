@@ -40,7 +40,8 @@ export async function PUT(
             scheduleEnd,
             priority,
             notes,
-            maxDailyLimit
+            maxDailyLimit,
+            isFallback
         } = await req.json();
 
         if (!vpa) {
@@ -65,7 +66,8 @@ export async function PUT(
                 scheduleEnd: scheduleEnd || null,
                 priority: priority !== undefined ? parseInt(priority) : 0,
                 notes: notes || null,
-                maxDailyLimit: maxDailyLimit ? parseFloat(maxDailyLimit) : null
+                maxDailyLimit: maxDailyLimit ? parseFloat(maxDailyLimit) : null,
+                isFallback: isFallback !== undefined ? !!isFallback : false
             }
         });
 

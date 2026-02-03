@@ -29,6 +29,7 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision }
                     <tr>
                         {isAdminView && <th className="px-6 py-4 w-12"></th>}
                         <th className="px-6 py-4">Date</th>
+                        <th className="px-6 py-4">Payment Method</th>
                         {isAdminView && <th className="px-6 py-4">User</th>}
                         <th className="px-6 py-4">Order ID</th>
                         <th className="px-6 py-4">Ref ID</th>
@@ -63,6 +64,9 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision }
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         {format(new Date(order.createdAt), "MMM d, yyyy h:mm a")}
                                     </td>
+                                    <td className="px-6 py-4 font-mono text-xs text-gray-400 break-all max-w-[150px]">
+                                        {order.paymentQrId}
+                                    </td>
                                     {isAdminView && (
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
@@ -76,12 +80,15 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision }
                                                 <div className="flex flex-col">
                                                     <span className="text-white font-medium">{order.user?.name || "Unknown"}</span>
                                                     <span className="text-xs text-gray-500">{order.user?.email || "-"}</span>
+                                                    {order.user?.phoneNumber && (
+                                                        <span className="text-xs text-blue-400 font-mono">{order.user.phoneNumber}</span>
+                                                    )}
                                                 </div>
                                             </div>
                                         </td>
                                     )}
                                     <td className="px-6 py-4 font-mono text-xs text-gray-300">
-                                        {order.id.slice(0, 8)}...
+                                        {order.id}
                                     </td>
                                     <td className="px-6 py-4 font-mono text-xs">
                                         {order.transactionId ? order.transactionId : <span className="text-gray-600">-</span>}

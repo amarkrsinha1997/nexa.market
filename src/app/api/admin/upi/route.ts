@@ -52,7 +52,8 @@ export async function POST(req: NextRequest) {
             scheduleEnd,
             priority,
             notes,
-            maxDailyLimit
+            maxDailyLimit,
+            isFallback
         } = await req.json();
 
         if (!vpa) return NextResponse.json({ success: false, message: "VPA is required" }, { status: 400 });
@@ -74,7 +75,8 @@ export async function POST(req: NextRequest) {
                 scheduleEnd: scheduleEnd || null,
                 priority: priority !== undefined ? parseInt(priority) : 0,
                 notes: notes || null,
-                maxDailyLimit: maxDailyLimit ? parseFloat(maxDailyLimit) : null
+                maxDailyLimit: maxDailyLimit ? parseFloat(maxDailyLimit) : null,
+                isFallback: !!isFallback
             }
         });
         return NextResponse.json({ success: true, data: { upi } });

@@ -14,6 +14,7 @@ interface UPI {
     priority: number;
     notes: string | null;
     maxDailyLimit: number | null;
+    isFallback: boolean;
 }
 
 interface UPIFormModalProps {
@@ -31,7 +32,8 @@ export default function UPIFormModal({ upi, onClose, onSave }: UPIFormModalProps
         priority: upi?.priority?.toString() || "0",
         notes: upi?.notes || "",
         maxDailyLimit: upi?.maxDailyLimit?.toString() || "",
-        isActive: upi?.isActive ?? true
+        isActive: upi?.isActive ?? true,
+        isFallback: upi?.isFallback || false
     });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -47,9 +49,10 @@ export default function UPIFormModal({ upi, onClose, onSave }: UPIFormModalProps
                 merchantName: formData.merchantName || null,
                 scheduleStart: formData.scheduleStart || null,
                 scheduleEnd: formData.scheduleEnd || null,
-                priority: parseInt(formData.priority) || 0,
+                priority: 0, // Default to 0 as UI control is removed
                 notes: formData.notes || null,
-                maxDailyLimit: formData.maxDailyLimit ? parseFloat(formData.maxDailyLimit) : null
+                maxDailyLimit: formData.maxDailyLimit ? parseFloat(formData.maxDailyLimit) : null,
+                isFallback: formData.isFallback
             };
 
             if (upi) {
@@ -93,144 +96,156 @@ export default function UPIFormModal({ upi, onClose, onSave }: UPIFormModalProps
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     {error && (
-                        <div className="bg-red-500/10 border border-red-500/30 text-red-500 px-4 py-3 rounded-lg">
+                        <div className="bg-red-500/10 border border-red-500/30 text-red-500 px-4 py-3 rounded-lg text-sm">
                             {error}
                         </div>
                     )}
 
-                    {/* UPI ID */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                            UPI ID <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.vpa}
-                            onChange={(e) => setFormData({ ...formData, vpa: e.target.value })}
-                            placeholder="merchant@paytm"
-                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                            required
-                        />
-                    </div>
-
-                    {/* Merchant Name */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Merchant Name
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.merchantName}
-                            onChange={(e) => setFormData({ ...formData, merchantName: e.target.value })}
-                            placeholder="Optional merchant name"
-                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                        />
-                    </div>
-
-                    {/* Schedule */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-2">
-                                Schedule Start (HH:mm)
+                    {/* Active Toggle & Merchant */}
+                    <div className="flex flex-col md:flex-row gap-4">
+                        <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-400 mb-2">
+                                UPI ID <span className="text-red-500">*</span>
                             </label>
                             <input
-                                type="time"
-                                value={formData.scheduleStart}
-                                onChange={(e) => setFormData({ ...formData, scheduleStart: e.target.value })}
-                                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                                type="text"
+                                value={formData.vpa}
+                                onChange={(e) => setFormData({ ...formData, vpa: e.target.value })}
+                                placeholder="merchant@upi"
+                                className="w-full bg-[#0f1016] border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 placeholder-gray-600 font-mono"
+                                required
                             />
-                            <p className="text-xs text-gray-500 mt-1">Leave empty for 24/7</p>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-2">
-                                Schedule End (HH:mm)
+                        <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-400 mb-2">
+                                Merchant Name
                             </label>
                             <input
-                                type="time"
-                                value={formData.scheduleEnd}
-                                onChange={(e) => setFormData({ ...formData, scheduleEnd: e.target.value })}
-                                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+                                type="text"
+                                value={formData.merchantName}
+                                onChange={(e) => setFormData({ ...formData, merchantName: e.target.value })}
+                                placeholder="e.g. Nexa Store"
+                                className="w-full bg-[#0f1016] border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 placeholder-gray-600"
                             />
-                            <p className="text-xs text-gray-500 mt-1">End time (inclusive)</p>
                         </div>
                     </div>
 
-                    {/* Priority */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Priority (Lower = Higher Priority)
+                    {/* Timer Section (Centered & Dark) */}
+                    <div className="bg-[#0f1016] rounded-xl p-6 border border-gray-800 flex flex-col items-center justify-center text-center">
+                        <label className="block text-sm font-medium text-blue-400 mb-4 uppercase tracking-wider">
+                            Active Schedule (24-Hour)
                         </label>
-                        <input
-                            type="number"
-                            value={formData.priority}
-                            onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                            min="0"
-                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">0 = highest priority</p>
+                        <div className="flex items-center gap-4">
+                            <div className="group">
+                                <input
+                                    type="time"
+                                    value={formData.scheduleStart}
+                                    onChange={(e) => setFormData({ ...formData, scheduleStart: e.target.value })}
+                                    className="bg-[#1a1b20] border border-gray-700 text-white text-2xl font-mono rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 text-center w-32 [color-scheme:dark]"
+                                />
+                                <span className="block text-xs text-gray-500 mt-2">Start Time</span>
+                            </div>
+                            <span className="text-gray-600 text-xl font-bold">→</span>
+                            <div className="group">
+                                <input
+                                    type="time"
+                                    value={formData.scheduleEnd}
+                                    onChange={(e) => setFormData({ ...formData, scheduleEnd: e.target.value })}
+                                    className="bg-[#1a1b20] border border-gray-700 text-white text-2xl font-mono rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 text-center w-32 [color-scheme:dark]"
+                                />
+                                <span className="block text-xs text-gray-500 mt-2">End Time</span>
+                            </div>
+                        </div>
+                        <p className="text-xs text-gray-600 mt-4 italic">
+                            Leave both empty for 24/7 availability
+                        </p>
                     </div>
 
-                    {/* Max Daily Limit */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Max Daily Limit (₹)
-                        </label>
-                        <input
-                            type="number"
-                            value={formData.maxDailyLimit}
-                            onChange={(e) => setFormData({ ...formData, maxDailyLimit: e.target.value })}
-                            min="0"
-                            step="0.01"
-                            placeholder="Optional daily limit"
-                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                        />
+                    {/* Limits & Notes */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-2">
+                                Daily Limit (₹)
+                            </label>
+                            <input
+                                type="number"
+                                value={formData.maxDailyLimit}
+                                onChange={(e) => setFormData({ ...formData, maxDailyLimit: e.target.value })}
+                                min="0"
+                                placeholder="No limit"
+                                className="w-full bg-[#0f1016] border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 placeholder-gray-600"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-2">
+                                Status
+                            </label>
+                            <label className="flex items-center gap-3 bg-[#0f1016] border border-gray-700 rounded-xl px-4 py-3 cursor-pointer hover:bg-white/5 transition-colors">
+                                <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${formData.isActive ? 'bg-blue-600 border-blue-600' : 'border-gray-500'}`}>
+                                    {formData.isActive && <div className="w-2 h-2 bg-white rounded-sm" />}
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    checked={formData.isActive}
+                                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                                    className="hidden"
+                                />
+                                <span className={formData.isActive ? "text-white" : "text-gray-400"}>
+                                    {formData.isActive ? "Enabled" : "Disabled"}
+                                </span>
+                            </label>
+                        </div>
                     </div>
 
-                    {/* Notes */}
+                    {/* Fallback Checkbox */}
+                    <div className="bg-[#0f1016] border border-gray-700 rounded-xl px-4 py-3">
+                        <label className="flex items-center gap-3 cursor-pointer">
+                            <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${formData.isFallback ? 'bg-purple-600 border-purple-600' : 'border-gray-500'}`}>
+                                {formData.isFallback && <div className="w-2 h-2 bg-white rounded-sm" />}
+                            </div>
+                            <input
+                                type="checkbox"
+                                checked={formData.isFallback}
+                                onChange={(e) => setFormData({ ...formData, isFallback: e.target.checked })}
+                                className="hidden"
+                            />
+                            <div>
+                                <span className="text-white font-medium block">Set as Main Fallback</span>
+                                <span className="text-xs text-gray-400">Used when no scheduled UPIs are available</span>
+                            </div>
+                        </label>
+                    </div>
+
                     <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Notes
+                        <label className="block text-sm font-medium text-gray-400 mb-2">
+                            Internal Notes
                         </label>
                         <textarea
                             value={formData.notes}
                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                            placeholder="Optional notes or comments"
-                            rows={3}
-                            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 resize-none"
+                            placeholder="Optional comments..."
+                            rows={2}
+                            className="w-full bg-[#0f1016] border border-gray-700 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-blue-500 resize-none placeholder-gray-600"
                         />
-                    </div>
-
-                    {/* Active Status */}
-                    <div className="flex items-center gap-2">
-                        <input
-                            type="checkbox"
-                            id="isActive"
-                            checked={formData.isActive}
-                            onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                            className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-700 rounded focus:ring-blue-500"
-                        />
-                        <label htmlFor="isActive" className="text-sm text-gray-300">
-                            Active (Can be selected for payments)
-                        </label>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-3 pt-4">
-                        <button
-                            type="submit"
-                            disabled={saving}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white font-medium py-2 rounded-lg transition-colors"
-                        >
-                            {saving ? 'Saving...' : (upi ? 'Update UPI' : 'Add UPI')}
-                        </button>
+                    <div className="flex gap-3 pt-2">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 rounded-lg transition-colors"
+                            className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-3 rounded-xl transition-colors"
                         >
                             Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={saving}
+                            className="flex-[2] bg-blue-600 hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed text-white font-medium py-3 rounded-xl transition-colors shadow-lg shadow-blue-900/20"
+                        >
+                            {saving ? 'Saving...' : (upi ? 'Update UPI' : 'Add UPI')}
                         </button>
                     </div>
                 </form>
