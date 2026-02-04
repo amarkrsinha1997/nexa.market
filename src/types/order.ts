@@ -29,6 +29,10 @@ export interface Order {
         phoneNumber?: string | null;
     };
     lifecycle?: LifecycleEvent[];
+    paymentAttemptedAt?: string | null;
+    paymentRecipientAddress?: string | null;
+    paymentFailureReason?: string | null;
+    nexaTransactionHash?: string | null;
     createdAt: string;
     updatedAt: string;
 }

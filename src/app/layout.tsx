@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import GoogleAuthProviderWrapper from "@/providers/GoogleAuthProviderWrapper";
 import { AuthProvider } from "@/lib/contexts/AuthContext";
@@ -21,10 +22,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className} suppressHydrationWarning>
         <GoogleAuthProviderWrapper>
-          <AuthProvider>
-            <PriceSchedulerInitializer />
-            {children}
-          </AuthProvider>
+          <Suspense fallback={null}>
+            <AuthProvider>
+              <PriceSchedulerInitializer />
+              {children}
+            </AuthProvider>
+          </Suspense>
         </GoogleAuthProviderWrapper>
       </body>
     </html>

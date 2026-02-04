@@ -1,4 +1,7 @@
+"use client";
+
 import { format } from "date-fns";
+import { formatNexaAmount } from "@/lib/utils/format";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { Coins, Check, ThumbsUp, ThumbsDown, Lock, ChevronDown, ChevronUp, ShieldCheck } from "lucide-react";
 import { Order } from "@/types/order";
@@ -47,25 +50,7 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision }:
                         onClick={handleCardClick}
                         className="bg-[#1a1b23] border border-gray-800 rounded-2xl p-4 space-y-3 shadow-lg active:scale-[0.98] transition-transform cursor-pointer"
                     >
-                        {/* User Info (Admin View Only) */}
-                        {isAdminView && order.user && (
-                            <div className="flex items-center gap-3 pb-3 border-b border-gray-800">
-                                {order.user.picture ? (
-                                    <img src={order.user.picture} alt="" className="w-10 h-10 rounded-full bg-gray-800 object-cover" />
-                                ) : (
-                                    <div className="w-10 h-10 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center text-sm font-bold">
-                                        {order.user.name?.[0] || "U"}
-                                    </div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                    <div className="text-white font-medium truncate">{order.user.name || "Unknown"}</div>
-                                    <div className="text-xs text-gray-500 truncate">{order.user.email || "-"}</div>
-                                    {order.user.phoneNumber && (
-                                        <div className="text-xs text-blue-400 font-mono mt-0.5">{order.user.phoneNumber}</div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
+
 
                         {/* Amount and Status */}
                         <div className="flex justify-between items-start">
@@ -83,7 +68,7 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision }:
                             <span className="text-gray-400 flex items-center gap-1">
                                 <Coins size={12} /> Nexa
                             </span>
-                            <span className="text-green-500 font-mono font-medium">+ {order.nexaAmount.toLocaleString(undefined, { maximumFractionDigits: 4 })}</span>
+                            <span className="text-green-500 font-mono font-medium">+ {formatNexaAmount(order.nexaAmount)}</span>
                         </div>
 
                         {/* Order ID */}

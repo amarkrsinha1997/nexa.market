@@ -10,25 +10,34 @@ datasource db {
 }
 
 model User {
-  id                       String    @id @default(uuid())
-  email                    String    @unique
+  id                       String          @id @default(uuid())
+  email                    String          @unique
   name                     String?
-  username                 String?   @unique
-  role                     String    @default("USER") // ADMIN, USER
-  googleId                 String?   @unique
+  username                 String?         @unique
+  role                     String          @default("USER") // ADMIN, USER
+  googleId                 String?         @unique
   picture                  String?
   refreshToken             String?
-  createdAt                DateTime  @default(now())
-  updatedAt                DateTime  @updatedAt
+  createdAt                DateTime        @default(now())
+  updatedAt                DateTime        @updatedAt
   dateOfBirth              DateTime?
   phoneNumber              String?
   nexaWalletAddress        String?
-  isOnboardingCompleted    Boolean   @default(false)
-  referralCode             String?   @unique
-  isEarlyUser              Boolean   @default(false)
-  walletAddressChangeCount Int       @default(0)
+  isOnboardingCompleted    Boolean         @default(false)
+  referralCode             String?         @unique
+  isEarlyUser              Boolean         @default(false)
+  walletAddressChangeCount Int             @default(0)
   lastLoginAt              DateTime?
   orders                   Order[]
+  walletHistory            WalletHistory[]
+}
+
+model WalletHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  address   String
+  createdAt DateTime @default(now())
 }
 
 model Order {
@@ -42,9 +51,15 @@ model Order {
 
   status OrderStatus @default(ORDER_CREATED)
 
-  paymentQrId   String // Which QR was shown
-  nexaAddress   String? // Frozen Nexa wallet address for this order
-  transactionId String? // User provided Ref/UTR
+  paymentQrId         String // Which QR was shown
+  nexaAddress         String? // Frozen Nexa wallet address for this order
+  transactionId       String? // User provided Ref/UTR
+  nexaTransactionHash String? // Blockchain transaction hash for released payment
+
+  // Payment tracking for retry system
+  paymentAttemptedAt      DateTime? // When payment was first attempted
+  paymentRecipientAddress String? // Nexa address payment was sent to
+  paymentFailureReason    String? // Reason if payment failed
 
   verifiedBy String? // Admin ID who verified
   checkedBy  String? // Admin ID who is checking/locking the order

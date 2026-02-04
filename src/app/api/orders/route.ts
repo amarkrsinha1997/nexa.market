@@ -19,15 +19,17 @@ export async function POST(req: NextRequest) {
         if (!user) return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
 
         const body = await req.json();
-        const { amountINR, nexaAddress } = body;
+        const { amountINR } = body;
 
         if (!amountINR || amountINR <= 0) {
             return NextResponse.json({ success: false, message: "Invalid amount" }, { status: 400 });
         }
 
-        if (!nexaAddress) {
-            return NextResponse.json({ success: false, message: "Nexa address is required" }, { status: 400 });
+        if (!user.nexaWalletAddress) {
+            return NextResponse.json({ success: false, message: "Please save your Nexa wallet address in your profile first." }, { status: 400 });
         }
+
+        const nexaAddress = user.nexaWalletAddress;
 
         // Fetch NEXA price and calculate amount
         const nexaPrice = await ConfigService.getNexaPrice();
@@ -118,10 +120,17 @@ export async function GET(req: NextRequest) {
         if (isAdmin && statusFilter) {
             if (statusFilter === "pending") {
                 whereClause.status = { in: ["VERIFICATION_PENDING", "VERIFYING", "ADMIN_APPROVED"] };
+                // Optionally exclude failed ones from pending if you want them strictly separate, 
+                // but usually pending means anything not final. 
+                // Let's exclude ones with failureReason to avoid clutter if they are in the other tab?
+                // For now, let's keep them in pending too so they aren't lost if filter is just 'pending'.
             } else if (statusFilter === "released") {
-                whereClause.status = { in: ["ADMIN_APPROVED", "RELEASE_PAYMENT"] };
+                whereClause.status = { in: ["RELEASE_PAYMENT"] };
             } else if (statusFilter === "rejected") {
                 whereClause.status = "REJECTED";
+            } else if (statusFilter === "transfer_failed") {
+                whereClause.status = "ADMIN_APPROVED";
+                whereClause.paymentFailureReason = { not: null };
             }
         }
 

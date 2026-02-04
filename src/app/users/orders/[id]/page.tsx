@@ -8,6 +8,7 @@ import { CheckCircle, Loader2, ArrowLeft, Clock, XCircle, AlertCircle } from "lu
 import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { format } from "date-fns";
+import { formatNexaAmount } from "@/lib/utils/format";
 
 export default function OrderDetailsPage() {
     const { id } = useParams();
@@ -128,7 +129,7 @@ export default function OrderDetailsPage() {
                     </div>
                     <div className="flex justify-between text-sm">
                         <span className="text-gray-500">NEXA Received</span>
-                        <span className="text-green-400 font-medium">{order.nexaAmount.toLocaleString()} NEXA</span>
+                        <span className="text-green-400 font-medium">{formatNexaAmount(order.nexaAmount)} NEXA</span>
                     </div>
                 </div>
 

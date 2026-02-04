@@ -66,6 +66,17 @@ export async function PATCH(req: NextRequest) {
                 console.error("Nexa Validation Error", e);
                 return NextResponse.json({ success: false, message: "Invalid Nexa Wallet Address Format" }, { status: 400 });
             }
+
+            // Check if address has changed and log history
+            const currentUser = await prisma.user.findUnique({ where: { email: payload.email } });
+            if (currentUser && currentUser.nexaWalletAddress !== nexaWalletAddress) {
+                await prisma.walletHistory.create({
+                    data: {
+                        userId: currentUser.id,
+                        address: nexaWalletAddress
+                    }
+                });
+            }
         }
 
         const user = await prisma.user.update({

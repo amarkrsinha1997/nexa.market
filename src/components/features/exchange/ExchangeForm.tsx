@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { apiClient } from "@/lib/api/client";
 import { useNexaPrice } from "@/lib/hooks/useNexaPrice";
+import { formatNexaAmount } from "@/lib/utils/format";
 import { useAuth } from "@/lib/hooks/useAuth";
 import NexaAddressInput from "@/components/ui/NexaAddressInput";
 
@@ -39,7 +40,7 @@ export default function ExchangeForm(props: ExchangeFormProps) {
         return inr / nexaPrice;
     };
 
-    const estimatedNexa = amount ? calculateNexa(parseFloat(amount)).toLocaleString(undefined, { maximumFractionDigits: 4 }) : "0";
+    const estimatedNexa = amount ? formatNexaAmount(calculateNexa(parseFloat(amount))) : "0";
 
     const handleBuyNexa = async () => {
         if (!amount || !nexaAddress) return;
@@ -47,8 +48,7 @@ export default function ExchangeForm(props: ExchangeFormProps) {
         try {
             // Send nexaAddress explicitly to freeze it for this order
             const res = await apiClient.post<any>("/orders", {
-                amountINR: parseFloat(amount),
-                nexaAddress: nexaAddress
+                amountINR: parseFloat(amount)
             });
             if (res.success && res.data?.orderId) {
                 router.push(`/users/payment/${res.data.orderId}`);
@@ -128,10 +128,20 @@ export default function ExchangeForm(props: ExchangeFormProps) {
                     <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Destination Wallet</label>
                     <button
                         onClick={async () => {
-                            if (isEditingWallet && nexaAddress !== user?.nexaWalletAddress) {
+                            if (!isEditingWallet) {
+                                setIsEditingWallet(true);
+                                return;
+                            }
+
+                            // Done clicked
+                            // Normalize strings for comparison (handle nulls/undefined)
+                            const current = nexaAddress?.trim() || "";
+                            const stored = user?.nexaWalletAddress?.trim() || "";
+
+                            if (current !== stored) {
                                 setIsSavingWallet(true);
                                 try {
-                                    await apiClient.patch("/user/profile", { nexaWalletAddress: nexaAddress });
+                                    await apiClient.patch("/user/profile", { nexaWalletAddress: current });
                                     await refetch();
                                 } catch (error) {
                                     console.error("Failed to save wallet", error);
@@ -139,7 +149,7 @@ export default function ExchangeForm(props: ExchangeFormProps) {
                                     setIsSavingWallet(false);
                                 }
                             }
-                            setIsEditingWallet(!isEditingWallet);
+                            setIsEditingWallet(false);
                         }}
                         disabled={isSavingWallet}
                         className="text-xs text-blue-500 hover:text-blue-400 disabled:opacity-50"

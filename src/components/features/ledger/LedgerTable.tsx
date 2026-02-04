@@ -1,6 +1,9 @@
+"use client";
+
 import { Order } from "@/types/order";
 import { User } from "@/lib/api/auth";
 import { format } from "date-fns";
+import { formatNexaAmount } from "@/lib/utils/format";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { Check, ThumbsUp, ThumbsDown, Lock, ChevronDown, ChevronUp, ShieldCheck } from "lucide-react";
 import { useState, Fragment } from "react";
@@ -128,7 +131,7 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision }
                                         ₹{order.amountINR.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                     </td>
                                     <td className="px-6 py-4 text-right text-green-500 font-medium">
-                                        {order.nexaAmount.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                                        {formatNexaAmount(order.nexaAmount)}
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         <StatusBadge status={order.status} />

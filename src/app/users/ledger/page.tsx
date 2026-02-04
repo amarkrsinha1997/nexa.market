@@ -3,12 +3,13 @@
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api/client";
-import { FileText, Coins, Filter } from "lucide-react";
+import { FileText, Coins, Filter, AlertTriangle } from "lucide-react";
 import LedgerTable from "@/components/features/ledger/LedgerTable";
 import LedgerList from "@/components/features/ledger/LedgerList";
+import PendingPaymentsTable from "@/components/admin/PendingPaymentsTable"; // Import new component
 import { Order } from "@/types/order";
 
-type FilterType = "all" | "confirmed" | "verified" | "pending" | "released" | "rejected";
+type FilterType = "all" | "confirmed" | "verified" | "pending" | "released" | "rejected" | "transfer_failed";
 
 export default function LedgerPage({ adminView = false }: { adminView?: boolean }) {
     const [loadingMore, setLoadingMore] = useState(false);
@@ -19,7 +20,6 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(false);
-    // LoadingMore and Filter already declared above
 
     useEffect(() => {
         if (user) {
@@ -34,7 +34,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
 
             // Build URL with status parameter for admins
             let url = `/orders?page=${pageNum}&limit=10`;
-            if (adminView && filter !== "all" && (filter === "pending" || filter === "released" || filter === "rejected")) {
+            if (adminView && filter !== "all") {
                 url += `&status=${filter}`;
             }
 
@@ -131,35 +131,8 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                 {/* Filter Buttons */}
                 <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar mask-gradient md:flex-wrap md:overflow-visible md:pb-0">
                     {!adminView ? (
-                        <>
-                            <button
-                                onClick={() => setFilter("all")}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "all"
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
-                                    }`}
-                            >
-                                All Orders
-                            </button>
-                            <button
-                                onClick={() => setFilter("confirmed")}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "confirmed"
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
-                                    }`}
-                            >
-                                Payment Confirmed
-                            </button>
-                            <button
-                                onClick={() => setFilter("verified")}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "verified"
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
-                                    }`}
-                            >
-                                Admin Verified
-                            </button>
-                        </>
+                        // User View: No filters, just title
+                        <div />
                     ) : (
                         <>
                             <button
@@ -170,6 +143,16 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                                     }`}
                             >
                                 NEXA PENDING
+                            </button>
+                            <button
+                                onClick={() => setFilter("transfer_failed")}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${filter === "transfer_failed"
+                                    ? "bg-orange-500/20 text-orange-500 border border-orange-500/50"
+                                    : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
+                                    }`}
+                            >
+                                <AlertTriangle size={14} />
+                                TRANSFER FAILED
                             </button>
                             <button
                                 onClick={() => setFilter("released")}
@@ -198,27 +181,38 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                 <div className="bg-[#1a1b23] rounded-2xl p-12 text-center border border-gray-800 mx-4 md:mx-0">
                     <Coins className="mx-auto text-gray-600 mb-4" size={48} />
                     <h3 className="text-lg font-medium text-white">No transactions yet</h3>
-                    <p className="text-gray-400 text-sm mt-2">Any purchases or deposits will appear here.</p>
+                    <p className="text-gray-400 text-sm mt-2">
+                        {filter === 'transfer_failed' ? "No failed payments found." : "Any purchases or deposits will appear here."}
+                    </p>
                 </div>
             ) : (
                 <div className="space-y-6">
-                    {/* Desktop View */}
-                    <div className="hidden md:block bg-[#1a1b23] rounded-2xl border border-gray-800 overflow-hidden shadow-xl">
-                        <LedgerTable
+                    {filter === 'transfer_failed' ? (
+                        <PendingPaymentsTable
                             orders={orders}
-                            currentUser={user}
-                            onCheck={handleCheckOrder}
-                            onDecision={handleOrderDecision}
+                            onRefresh={() => fetchOrders(page)}
                         />
-                    </div>
+                    ) : (
+                        <>
+                            {/* Desktop View */}
+                            <div className="hidden md:block bg-[#1a1b23] rounded-2xl border border-gray-800 overflow-hidden shadow-xl">
+                                <LedgerTable
+                                    orders={orders}
+                                    currentUser={user}
+                                    onCheck={handleCheckOrder}
+                                    onDecision={handleOrderDecision}
+                                />
+                            </div>
 
-                    {/* Mobile View */}
-                    <LedgerList
-                        orders={orders}
-                        currentUser={user}
-                        onCheck={handleCheckOrder}
-                        onDecision={handleOrderDecision}
-                    />
+                            {/* Mobile View */}
+                            <LedgerList
+                                orders={orders}
+                                currentUser={user}
+                                onCheck={handleCheckOrder}
+                                onDecision={handleOrderDecision}
+                            />
+                        </>
+                    )}
 
                     {hasMore && (
                         <div className="flex justify-center pb-8">

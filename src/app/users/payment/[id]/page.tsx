@@ -10,6 +10,7 @@ import PaymentQRCode from "@/components/features/payment/PaymentQRCode";
 import UPICopy from "@/components/features/payment/UPICopy";
 import PaymentDeeplink from "@/components/features/payment/PaymentDeeplink";
 import PaymentConfirmation from "@/components/features/payment/PaymentConfirmation";
+import { formatNexaAmount } from "@/lib/utils/format";
 
 export default function PaymentPage() {
     const { id } = useParams();
@@ -84,20 +85,20 @@ export default function PaymentPage() {
                 <div className="space-y-3">
                     <div className="space-y-1">
                         <p className="text-gray-400 text-sm uppercase tracking-wider">Total Payable</p>
-                        <div className="flex items-center justify-center gap-1 text-3xl font-bold text-white">
+                        <div className="flex items-center justify-center gap-1 text-3xl font-bold text-green-500">
                             <IndianRupee size={24} />
                             {order.amountINR}
                         </div>
                     </div>
 
                     {/* NEXA Amount Display */}
-                    <div className="bg-[#0f1016] rounded-lg p-3 border border-gray-800">
-                        <p className="text-gray-500 text-xs mb-1">You will receive</p>
-                        <div className="flex items-center justify-center gap-2">
-                            <span className="text-xl font-bold text-green-400">
-                                {order.nexaAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    <div className="bg-[#0f1016] rounded-lg p-2 border border-gray-800">
+                        <p className="text-gray-500 text-[10px] mb-0.5">You will receive</p>
+                        <div className="flex items-center justify-center gap-1">
+                            <span className="text-lg font-bold text-blue-600">
+                                {formatNexaAmount(order.nexaAmount)}
                             </span>
-                            <span className="text-sm font-medium text-gray-400">NEXA</span>
+                            <span className="text-xs font-medium text-gray-400">NEXA</span>
                         </div>
                     </div>
                 </div>

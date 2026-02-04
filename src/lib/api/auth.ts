@@ -5,6 +5,7 @@ import { API_CONFIG } from "../config/api";
 let refreshPromise: Promise<boolean> | null = null;
 
 export interface User {
+    id: string;
     userId: string;
     email: string;
     name: string;

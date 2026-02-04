@@ -124,7 +124,7 @@ export default function AdminProfilePage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div className="p-3 rounded-xl bg-[#0f1016] border border-gray-800/50">
                                 <label className="text-[10px] text-gray-500 block mb-1 uppercase tracking-wider">User ID</label>
-                                <div className="font-mono text-xs text-white break-all select-all">{user?.userId || "N/A"}</div>
+                                <div className="font-mono text-xs text-white break-all select-all">{user?.id || "N/A"}</div>
                             </div>
 
                             <div className="p-3 rounded-xl bg-[#0f1016] border border-gray-800/50">
@@ -165,7 +165,7 @@ export default function AdminProfilePage() {
                                 <div className="flex justify-end">
                                     <button
                                         onClick={handleSavePhone}
-                                        disabled={savingPhone || !phoneNumber}
+                                        disabled={savingPhone || !phoneNumber || (user?.phoneNumber === `${phoneCountry} ${phoneNumber}`)}
                                         className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-2"
                                     >
                                         {savingPhone ? (
@@ -192,7 +192,7 @@ export default function AdminProfilePage() {
                                 <div className="flex justify-end">
                                     <button
                                         onClick={handleSaveWallet}
-                                        disabled={savingWallet || !walletAddress || !isWalletValid}
+                                        disabled={savingWallet || !walletAddress || !isWalletValid || (user?.nexaWalletAddress === walletAddress)}
                                         className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-2"
                                     >
                                         {savingWallet ? (
