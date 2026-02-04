@@ -6,6 +6,7 @@ import { useRole } from "@/lib/hooks/useRole";
 import { Loader2, FileText, Settings, User, Wallet } from "lucide-react";
 import Link from "next/link";
 import { LocalStorageUtils } from "@/lib/utils/storage";
+import NotificationPermissionRequest from "@/components/features/notifications/NotificationPermissionRequest";
 
 export default function AdminLayout({
     children,
@@ -110,6 +111,7 @@ export default function AdminLayout({
                     })}
                 </div>
             </nav>
+            <NotificationPermissionRequest />
         </div>
     );
 }

@@ -306,9 +306,21 @@ export class BlockchainService {
     /**
      * Ensure connection to Rostrum provider with retry logic
      */
+    /**
+     * Ensure connection to Rostrum provider with retry logic
+     */
     private async ensureConnection() {
         const maxRetries = 3;
         const retryDelay = 1000;
+
+        // Check if already connected by pinging latency
+        try {
+            await rostrumProvider.getLatency();
+            return; // Connection is active
+        } catch (e) {
+            // Not connected, proceed to connect
+            console.log('[BlockchainService] Not connected, initiating connection...');
+        }
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
@@ -322,6 +334,9 @@ export class BlockchainService {
                 } else {
                     await rostrumProvider.connect(nexaConfig.network);
                 }
+
+                // Verify connection
+                await rostrumProvider.getLatency();
                 console.log('[BlockchainService] Connected to blockchain');
                 return;
             } catch (error) {

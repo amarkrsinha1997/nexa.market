@@ -65,6 +65,30 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision, o
                     >
 
 
+                        {/* Admin View: User Details */}
+                        {isAdminView && order.user && (
+                            <div className="flex items-center gap-3 pb-3 border-b border-gray-800">
+                                {order.user.picture ? (
+                                    <img
+                                        src={order.user.picture}
+                                        alt={order.user.name || "User"}
+                                        className="w-10 h-10 rounded-full bg-gray-700 object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-gray-400">
+                                        {(order.user.name?.[0] || "U").toUpperCase()}
+                                    </div>
+                                )}
+                                <div className="min-w-0">
+                                    <div className="text-sm font-medium text-white truncate">{order.user.name || "Unknown User"}</div>
+                                    <div className="text-xs text-gray-500 truncate">{order.user.email}</div>
+                                    {order.user.phoneNumber && (
+                                        <div className="text-xs text-blue-400 mt-0.5">{order.user.phoneNumber}</div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Amount and Status */}
                         <div className="flex justify-between items-start">
                             <div>
@@ -227,7 +251,7 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision, o
                                 </button>
                                 {isExpanded && (
                                     <div className="pt-2 border-t border-gray-800" onClick={(e) => e.stopPropagation()}>
-                                        <LifecycleViewer lifecycle={order.lifecycle} />
+                                        <LifecycleViewer lifecycle={order.lifecycle} orderUserId={order.userId} />
                                     </div>
                                 )}
                             </>

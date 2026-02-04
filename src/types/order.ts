@@ -15,6 +15,7 @@ export interface LifecycleEvent {
 
 export interface Order {
     id: string;
+    userId: string;
     amountINR: number;
     nexaAmount: number;
     nexaPrice: number;

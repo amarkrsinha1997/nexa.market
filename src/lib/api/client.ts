@@ -86,10 +86,11 @@ class ApiClient {
      * Delegates to Auth API to check expiration/refresh.
      */
     public async ensureTokenValid(): Promise<boolean> {
-        const token = this.getToken();
-        if (!token) return false;
-
-        // Use AuthApi to check/refresh
+        // AuthApi.refreshSession handles:
+        // 1. Checking if token is expired (via JwtUtils)
+        // 2. Refreshing if needed
+        // 3. Logging out if refresh fails
+        // We just return the result (true = valid/refreshed, false = invalid/logged out)
         return AuthApi.refreshSession();
     }
 

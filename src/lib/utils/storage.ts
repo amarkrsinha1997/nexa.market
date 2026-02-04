@@ -16,6 +16,20 @@ export const LocalStorageUtils = {
         localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
     },
 
+    // Refresh Token
+    setRefreshToken: (token: string): void => {
+        if (typeof window === "undefined") return;
+        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, token);
+    },
+    getRefreshToken: (): string | null => {
+        if (typeof window === "undefined") return null;
+        return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+    },
+    removeRefreshToken: (): void => {
+        if (typeof window === "undefined") return;
+        localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+    },
+
     // User Data (Cached Profile)
     setUser: (user: User): void => {
         if (typeof window === "undefined") return;
@@ -42,6 +56,7 @@ export const LocalStorageUtils = {
         if (typeof window === "undefined") return;
         // Targeted clear
         localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+        localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
         localStorage.removeItem(STORAGE_KEYS.USER_DATA);
         localStorage.removeItem("post_onboarding_redirect");
 

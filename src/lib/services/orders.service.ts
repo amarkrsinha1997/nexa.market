@@ -17,6 +17,7 @@ import { nexaConfig } from "@/lib/config/nexa.config";
 import { User, Order, OrderStatus } from "@prisma/client";
 import { UPIUrlBuilder } from "@/lib/utils/upi-url-builder";
 import { AuthService } from "@/lib/services/auth.service";
+import { NotificationService } from "@/lib/services/notification.service";
 
 export class ApiError extends Error {
     constructor(public message: string, public statusCode: number = 500) {
@@ -191,6 +192,14 @@ export class OrdersService {
             }
         });
 
+        // Notify Admins
+        await NotificationService.sendToAdmins(
+            "New Payment Received",
+            `${currentUser.name || currentUser.username || currentUser.email} has confirmed payment of ₹${order.amountINR}.`,
+            "INFO",
+            `/admin/orders/${orderId}`
+        );
+
         return updatedOrder;
     }
 
@@ -229,6 +238,14 @@ export class OrdersService {
                 lifecycle: [...currentLifecycle, lifecycleEvent]
             }
         });
+
+        // Notify All Admins
+        await NotificationService.sendToAdmins(
+            "Order Locked by Admin",
+            `${adminUser.name || adminUser.email} is now verifying Order #${order.id.slice(0, 8)}.`,
+            "INFO",
+            `/admin/orders/${orderId}`
+        );
 
         return updatedOrder;
     }
@@ -330,7 +347,7 @@ export class OrdersService {
             });
         }
 
-        return await prisma.order.update({
+        const updatedResult = await prisma.order.update({
             where: { id: orderId },
             data: {
                 status: newStatus,
@@ -343,6 +360,34 @@ export class OrdersService {
                 })
             }
         });
+
+        // Notifications for Admins
+        if (decision === 'APPROVE') {
+            await NotificationService.sendToAdmins(
+                "Order Approved",
+                `Order #${orderId.slice(0, 8)} approved by ${adminUser.name || adminUser.email}.`,
+                "SUCCESS",
+                `/admin/orders/${orderId}`
+            );
+        } else if (decision === 'REJECT') {
+            await NotificationService.sendToAdmins(
+                "Order Rejected",
+                `Order #${orderId.slice(0, 8)} rejected by ${adminUser.name || adminUser.email}: ${reason || 'No reason provided'}.`,
+                "WARNING",
+                `/admin/orders/${orderId}`
+            );
+        }
+
+        if (newStatus === 'RELEASE_PAYMENT') {
+            await NotificationService.sendToAdmins(
+                "Funds Released",
+                `Payment released for Order #${orderId.slice(0, 8)}.`,
+                "SUCCESS",
+                `/admin/orders/${orderId}`
+            );
+        }
+
+        return updatedResult;
     }
 
     /**
@@ -434,6 +479,16 @@ export class OrdersService {
                 paymentFailureReason: failureReason
             }
         });
+
+        // Notify Admins only
+        if (newStatus === 'RELEASE_PAYMENT') {
+            await NotificationService.sendToAdmins(
+                "Retry Successful",
+                `Manual payment retry successful for Order #${orderId.slice(0, 8)} by ${adminUser.name || adminUser.email}.`,
+                "SUCCESS",
+                `/admin/orders/${orderId}`
+            );
+        }
 
         return { success: newStatus === 'RELEASE_PAYMENT', order: updatedOrder, message: failureReason };
     }

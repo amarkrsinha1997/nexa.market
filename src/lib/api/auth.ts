@@ -1,6 +1,7 @@
 
 import { User } from "@prisma/client";
 import { LocalStorageUtils } from "@/lib/utils/storage";
+import { JwtUtils } from "@/lib/utils/jwt";
 
 const API_BASE_URL = "/api";
 
@@ -34,6 +35,9 @@ export const AuthApi = {
         if (data.data.accessToken) {
             LocalStorageUtils.setToken(data.data.accessToken);
         }
+        if (data.data.refreshToken) {
+            LocalStorageUtils.setRefreshToken(data.data.refreshToken);
+        }
         if (data.data.user) {
             LocalStorageUtils.setUser(data.data.user);
         }
@@ -49,13 +53,50 @@ export const AuthApi = {
     },
 
     refreshSession: async (force: boolean = false): Promise<boolean> => {
-        // Implement if you have a refresh token flow. 
-        // For now, with 30-day tokens, simple existence check or manual re-login might be enough.
-        // But if we want to use the /api/auth/refresh endpoint:
-        // We'd need to store refreshToken too. (Login API returns it).
+        const token = LocalStorageUtils.getToken();
+        if (!token) return false;
 
-        // Let's assume for now we just check if we have a token.
-        return !!LocalStorageUtils.getToken();
+        // Check if current token is expired (skip if force=true)
+        if (!force && !JwtUtils.isExpired(token)) {
+            return true;
+        }
+
+        const refreshToken = LocalStorageUtils.getRefreshToken();
+        if (!refreshToken) {
+            AuthApi.logout();
+            return false;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ refreshToken }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                // If refresh failed, logout user
+                AuthApi.logout();
+                return false;
+            }
+
+            // Update tokens
+            if (data.data.accessToken) {
+                LocalStorageUtils.setToken(data.data.accessToken);
+            }
+            // Optional: Backend might rotate refresh tokens too
+            if (data.data.refreshToken) {
+                LocalStorageUtils.setRefreshToken(data.data.refreshToken);
+            }
+
+            return true;
+        } catch (error) {
+            console.error("Token refresh failed", error);
+            AuthApi.logout();
+            return false;
+        }
     },
 
     logout: () => {
