@@ -2,7 +2,10 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { authApi, User } from "@/lib/api/auth";
+import { AuthApi } from "@/lib/api/auth";
+import { UserApi } from "@/lib/api/user";
+import { LocalStorageUtils } from "@/lib/utils/storage";
+import { User } from "@prisma/client";
 import { ROLES } from "@/lib/config/roles";
 
 interface AuthContextType {
@@ -34,9 +37,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const checkAuth = async () => {
         try {
-            let isAuth = await authApi.checkAuthStatus();
+            let isAuth = await AuthApi.checkAuthStatus();
             if (!isAuth) {
-                isAuth = await authApi.refreshSession();
+                isAuth = await AuthApi.refreshSession();
             }
 
             if (isAuth) {
@@ -50,11 +53,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     // We will NOT call checkAuth on every pathname change in the Context version.
                     // We will only do it on mount.
 
-                    const profileRes = await authApi.getProfile();
-                    if (profileRes.success && profileRes.data) {
-                        const freshUser = profileRes.data.user;
+                    const freshUser = await UserApi.getProfile();
+                    if (freshUser) {
                         setUser(freshUser);
-                        authApi.storeUser(freshUser);
+                        LocalStorageUtils.setUser(freshUser);
                         handleOnboardingRedirect(freshUser);
                     } else {
                         fallbackToStored();
@@ -99,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const fallbackToStored = () => {
-        const storedUser = authApi.getStoredUser();
+        const storedUser = LocalStorageUtils.getUser();
         if (storedUser) setUser(storedUser);
     };
 
@@ -115,30 +117,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const login = async (params: { googleToken?: string; code?: string; referralCode?: string }) => {
-        const response = await authApi.googleLogin(params);
+        const response = await AuthApi.loginWithGoogle(params.googleToken, params.code, params.referralCode);
         if (response.success && response.data) {
             setUser(response.data.user);
-            authApi.storeUser(response.data.user);
+            LocalStorageUtils.setUser(response.data.user);
             return response.data;
         }
         throw new Error("Login failed");
     };
 
     const logout = () => {
-        authApi.logout();
+        AuthApi.logout();
         setUser(null);
         router.push("/login");
     };
 
     const refresh = async () => {
-        return await authApi.refreshSession(true);
+        return await AuthApi.refreshSession(true);
     };
 
     const refetch = async () => {
-        const profileRes = await authApi.getProfile(true); // Force refresh
-        if (profileRes.success && profileRes.data) {
-            setUser(profileRes.data.user);
-            authApi.storeUser(profileRes.data.user);
+        try {
+            const updatedUser = await UserApi.getProfile();
+            if (updatedUser) {
+                setUser(updatedUser);
+                LocalStorageUtils.setUser(updatedUser);
+            }
+        } catch (e) {
+            console.error("Failed to refetch profile", e);
         }
     };
 

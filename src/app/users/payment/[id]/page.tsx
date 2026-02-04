@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { apiClient } from "@/lib/api/client";
+import { OrdersApi } from "@/lib/api/orders";
 import { CheckCircle, IndianRupee, Loader2, ArrowLeft, Wallet, Copy } from "lucide-react";
 import Link from "next/link";
 import PaymentQRCode from "@/components/features/payment/PaymentQRCode";
@@ -29,10 +29,10 @@ export default function PaymentPage() {
         const fetchOrder = async () => {
             try {
                 // Using the confirm endpoint which also acts as GET details
-                const res = await apiClient.get<any>(`/orders/${id}/confirm`);
+                const res = await OrdersApi.getPaymentDetails(id as string);
                 if (res.success) {
-                    setOrder(res.data.order);
-                    setUpiString(res.data.upiString);
+                    setOrder(res.data?.order);
+                    setUpiString(res.data?.upiString || "");
                 } else {
                     setError("Failed to load order");
                 }
@@ -49,9 +49,13 @@ export default function PaymentPage() {
     const handleConfirmPayment = async () => {
         setConfirming(true);
         try {
-            const res = await apiClient.post<any>(`/orders/${id}/confirm`, {});
+            const res = await OrdersApi.confirmPayment(id as string);
             if (res.success) {
-                setOrder(res.data.order); // Update local state to show status change
+                // Fetch updated details as requested to ensure UI is in sync and validation is complete
+                const detailsRes = await OrdersApi.getPaymentDetails(id as string);
+                if (detailsRes.success && detailsRes.data) {
+                    setOrder(detailsRes.data.order);
+                }
             }
         } catch (err: any) {
             alert("Failed to confirm: " + err.message);

@@ -6,9 +6,11 @@ export interface LifecycleEvent {
     actorName: string | null;
     actorEmail: string;
     actorPicture: string | null;
-    action: 'CHECK' | 'APPROVE' | 'REJECT' | 'UPDATE';
+    action: 'ORDER_CREATED' | 'PAYMENT_CONFIRMED' | 'CHECK' | 'APPROVE' | 'REJECT' | 'UPDATE' | 'RELEASE_PAYMENT' | 'PAYMENT_ATTEMPT_FAILED' | 'PAYMENT_RETRY_FAILED' | 'PAYMENT_RETRY_SUCCESS';
     note?: string;     // Optional reason/note
     isSuperadminOverride?: boolean; // True if superadmin overrode lock
+    recipientAddress?: string; // For payment events
+    txHash?: string; // For payment events
 }
 
 export interface Order {

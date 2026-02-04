@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ConfigService } from "@/lib/services/config.service";
+import { AuthService, ApiError } from "@/lib/services/auth.service";
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +16,9 @@ export async function GET() {
 
 export async function POST(req: Request) {
     try {
+        const user = await AuthService.authenticate(req);
+        AuthService.isAdminOrThrowError(user);
+
         const body = await req.json();
         const { pricePerCrore } = body;
 
@@ -24,8 +28,11 @@ export async function POST(req: Request) {
 
         await ConfigService.setNexaPrice(pricePerCrore);
         return NextResponse.json({ success: true, message: "Price updated successfully" });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Config update failed", error);
+        if (error instanceof ApiError) {
+            return NextResponse.json({ success: false, message: error.message }, { status: error.statusCode });
+        }
         return NextResponse.json({ success: false, message: "Failed to update config" }, { status: 500 });
     }
 }

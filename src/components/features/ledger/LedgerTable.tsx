@@ -1,11 +1,11 @@
 "use client";
 
 import { Order } from "@/types/order";
-import { User } from "@/lib/api/auth";
+import { User } from "@prisma/client";
 import { format } from "date-fns";
 import { formatNexaAmount } from "@/lib/utils/format";
 import StatusBadge from "@/components/ui/StatusBadge";
-import { Check, ThumbsUp, ThumbsDown, Lock, ChevronDown, ChevronUp, ShieldCheck } from "lucide-react";
+import { Check, ThumbsUp, ThumbsDown, Lock, ChevronDown, ChevronUp, ShieldCheck, AlertTriangle, RefreshCw } from "lucide-react";
 import { useState, Fragment } from "react";
 import LifecycleViewer from "./LifecycleViewer";
 
@@ -14,12 +14,22 @@ interface LedgerTableProps {
     currentUser?: User | null;
     onCheck?: (orderId: string) => void;
     onDecision?: (orderId: string, decision: 'APPROVE' | 'REJECT', reason?: string) => void;
+    onReprocess?: (orderId: string) => void;
 }
 
-export default function LedgerTable({ orders, currentUser, onCheck, onDecision }: LedgerTableProps) {
+export default function LedgerTable({ orders, currentUser, onCheck, onDecision, onReprocess }: LedgerTableProps) {
     const isAdminView = !!currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'SUPERADMIN');
     const isSuperAdmin = currentUser?.role === 'SUPERADMIN';
     const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+    const [processingId, setProcessingId] = useState<string | null>(null);
+
+    const handleReprocess = async (e: React.MouseEvent, orderId: string) => {
+        e.stopPropagation();
+        if (processingId) return;
+        setProcessingId(orderId);
+        await onReprocess?.(orderId);
+        setProcessingId(null);
+    };
 
     const toggleExpanded = (orderId: string) => {
         setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
@@ -45,16 +55,18 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision }
                 </thead>
                 <tbody className="divide-y divide-gray-800">
                     {orders.map((order) => {
-                        const isLockedByMe = order.checkedBy === currentUser?.userId;
-                        const isLockedByOthers = order.checkedBy && order.checkedBy !== currentUser?.userId;
+                        const isLockedByMe = order.checkedBy === currentUser?.id;
+                        const isLockedByOthers = order.checkedBy && order.checkedBy !== currentUser?.id;
                         const isExpanded = expandedOrderId === order.id;
                         const hasLifecycle = order.lifecycle && order.lifecycle.length > 0;
 
                         return (
                             <Fragment key={order.id}>
                                 <tr
-                                    className="hover:bg-gray-800/50 transition-colors cursor-pointer"
+                                    className={`hover:bg-gray-800/50 transition-colors ${isAdminView ? '' : 'cursor-pointer'}`}
                                     onClick={() => {
+                                        if (isAdminView) return;
+
                                         if (order.status === 'ORDER_CREATED') {
                                             window.location.href = `/users/payment/${order.id}`;
                                         } else {
@@ -134,7 +146,14 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision }
                                         {formatNexaAmount(order.nexaAmount)}
                                     </td>
                                     <td className="px-6 py-4 text-center">
-                                        <StatusBadge status={order.status} />
+                                        <div className="flex items-center justify-center gap-2">
+                                            {isAdminView && order.paymentFailureReason && (
+                                                <div className="text-red-500 animate-pulse" title="Payment Failed - Needs Attention">
+                                                    <AlertTriangle size={16} />
+                                                </div>
+                                            )}
+                                            <StatusBadge status={order.status} />
+                                        </div>
                                     </td>
                                     {isAdminView && (
                                         <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
@@ -188,11 +207,27 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision }
                                                 )}
 
                                                 {/* Completed states */}
-                                                {["ADMIN_APPROVED", "RELEASE_PAYMENT"].includes(order.status) && (
+                                                {/* Completed states */}
+                                                {order.status === "RELEASE_PAYMENT" && (
                                                     <span className="text-xs text-emerald-500">Completed</span>
+                                                )}
+                                                {order.status === "ADMIN_APPROVED" && (
+                                                    <span className="text-xs text-orange-400">Transfer Pending</span>
                                                 )}
                                                 {order.status === "REJECTED" && (
                                                     <span className="text-xs text-red-500">Rejected</span>
+                                                )}
+
+                                                {/* Retry Button */}
+                                                {order.paymentFailureReason && (
+                                                    <button
+                                                        onClick={(e) => handleReprocess(e, order.id)}
+                                                        disabled={!!processingId}
+                                                        className="p-2 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors relative disabled:opacity-50"
+                                                        title={`Retry Payment (${order.paymentFailureReason})`}
+                                                    >
+                                                        <RefreshCw size={16} className={processingId === order.id ? "animate-spin" : ""} />
+                                                    </button>
                                                 )}
                                             </div>
                                         </td>

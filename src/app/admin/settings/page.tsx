@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { LocalStorageUtils } from "@/lib/utils/storage";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Monitor, Save, ChevronDown, ChevronUp, LogOut } from "lucide-react";
-import { apiClient } from "@/lib/api/client";
+import { ConfigApi } from "@/lib/api/config";
 import { useAuth } from "@/lib/hooks/useAuth";
 
 export default function AdminSettingsPage() {
@@ -23,7 +23,7 @@ export default function AdminSettingsPage() {
     useEffect(() => {
         const fetchCurrentPrice = async () => {
             try {
-                const res = await apiClient.get<{ price: number }>("/config");
+                const res = await ConfigApi.getConfig();
                 if (res.success && res.data?.price) {
                     // price is per Nexa, convert to per Crore
                     const pricePerCroreValue = res.data.price * 10000000;
@@ -47,7 +47,7 @@ export default function AdminSettingsPage() {
         if (!pricePerCrore) return;
         setLoading(true);
         try {
-            await apiClient.post("/config", { pricePerCrore: parseFloat(pricePerCrore) });
+            await ConfigApi.updateConfig(parseFloat(pricePerCrore));
             alert("Price updated successfully!");
         } catch (error) {
             console.error("Failed to update price", error);

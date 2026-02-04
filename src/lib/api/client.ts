@@ -1,6 +1,7 @@
 import { API_CONFIG } from "../config/api";
 import { STORAGE_KEYS } from "../config/storage-keys";
-import { authApi } from "./auth";
+import { AuthApi } from "./auth";
+import { LocalStorageUtils } from "../utils/storage";
 
 // Debug: Log environment variable at module load
 if (typeof window !== "undefined") {
@@ -47,11 +48,10 @@ class ApiClient {
     }
 
     /**
-     * Get authentication token from localStorage
+     * Get authentication token from storage util
      */
     private getToken(): string | null {
-        if (typeof globalThis.window === "undefined") return null;
-        return localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+        return LocalStorageUtils.getToken();
     }
 
     /**
@@ -89,8 +89,8 @@ class ApiClient {
         const token = this.getToken();
         if (!token) return false;
 
-        // Use authApi to check/refresh
-        return authApi.refreshSession();
+        // Use AuthApi to check/refresh
+        return AuthApi.refreshSession();
     }
 
 
@@ -99,16 +99,22 @@ class ApiClient {
      */
     private handleSessionExpired() {
         console.warn("[API] Session expired, redirecting to login");
-        localStorage.clear();
-        sessionStorage.clear();
-        // Clear cookies
-        document.cookie.split(";").forEach((c) => {
-            document.cookie = c
-                .replace(/^ +/, "")
-                .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-        });
 
+        // Comprehensive clear as requested
+        LocalStorageUtils.clearAuth();
+
+        // Fallback to clearing everything if LocalStorageUtils.clearAuth doesn't cover all bases 
+        // (User asked to "clear the data as well from all the storage")
         if (typeof window !== "undefined") {
+            localStorage.clear();
+            sessionStorage.clear();
+            // Clear cookies
+            document.cookie.split(";").forEach((c) => {
+                document.cookie = c
+                    .replace(/^ +/, "")
+                    .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            });
+
             const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
             window.location.href = `/login?returnUrl=${returnUrl}`;
         }
@@ -146,8 +152,8 @@ class ApiClient {
             // 2. Handle 401 Unauthorized (Token might be invalid/revoked despite not being expired in time)
             if (response.status === 401) {
                 console.log("[API] Received 401, attempting refresh...");
-                // Force refresh via authApi
-                const refreshed = await authApi.refreshSession(true);
+                // Force refresh via AuthApi
+                const refreshed = await AuthApi.refreshSession(true);
 
                 if (refreshed) {
                     // Retry original request with new token

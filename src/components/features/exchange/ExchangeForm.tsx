@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { ArrowDown, IndianRupee, Wallet, Loader2, Copy } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { apiClient } from "@/lib/api/client";
+import { OrdersApi } from "@/lib/api/orders";
+import { UserApi } from "@/lib/api/user";
 import { useNexaPrice } from "@/lib/hooks/useNexaPrice";
 import { formatNexaAmount } from "@/lib/utils/format";
 import { useAuth } from "@/lib/hooks/useAuth";
@@ -47,9 +48,7 @@ export default function ExchangeForm(props: ExchangeFormProps) {
         setCreatingOrder(true);
         try {
             // Send nexaAddress explicitly to freeze it for this order
-            const res = await apiClient.post<any>("/orders", {
-                amountINR: parseFloat(amount)
-            });
+            const res = await OrdersApi.createOrder(parseFloat(amount), nexaAddress);
             if (res.success && res.data?.orderId) {
                 router.push(`/users/payment/${res.data.orderId}`);
             }
@@ -141,7 +140,7 @@ export default function ExchangeForm(props: ExchangeFormProps) {
                             if (current !== stored) {
                                 setIsSavingWallet(true);
                                 try {
-                                    await apiClient.patch("/user/profile", { nexaWalletAddress: current });
+                                    await UserApi.updateProfile({ nexaWalletAddress: current });
                                     await refetch();
                                 } catch (error) {
                                     console.error("Failed to save wallet", error);

@@ -3,9 +3,9 @@
 import { format } from "date-fns";
 import { formatNexaAmount } from "@/lib/utils/format";
 import StatusBadge from "@/components/ui/StatusBadge";
-import { Coins, Check, ThumbsUp, ThumbsDown, Lock, ChevronDown, ChevronUp, ShieldCheck } from "lucide-react";
+import { Coins, Check, ThumbsUp, ThumbsDown, Lock, ChevronDown, ChevronUp, ShieldCheck, AlertTriangle, RefreshCw } from "lucide-react";
 import { Order } from "@/types/order";
-import { User } from "@/lib/api/auth";
+import { User } from "@prisma/client";
 import { useState } from "react";
 import LifecycleViewer from "./LifecycleViewer";
 
@@ -14,12 +14,22 @@ interface LedgerListProps {
     currentUser?: User | null;
     onCheck?: (orderId: string) => void;
     onDecision?: (orderId: string, decision: 'APPROVE' | 'REJECT', reason?: string) => void;
+    onReprocess?: (orderId: string) => void;
 }
 
-export default function LedgerList({ orders, currentUser, onCheck, onDecision }: LedgerListProps) {
+export default function LedgerList({ orders, currentUser, onCheck, onDecision, onReprocess }: LedgerListProps) {
     const isAdminView = !!currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'SUPERADMIN');
     const isSuperAdmin = currentUser?.role === 'SUPERADMIN';
     const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+    const [processingId, setProcessingId] = useState<string | null>(null);
+
+    const handleReprocess = async (e: React.MouseEvent, orderId: string) => {
+        e.stopPropagation();
+        if (processingId) return;
+        setProcessingId(orderId);
+        await onReprocess?.(orderId);
+        setProcessingId(null);
+    };
 
     const toggleExpanded = (orderId: string) => {
         setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
@@ -28,14 +38,17 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision }:
     return (
         <div className="md:hidden space-y-4 px-4">
             {orders.map((order) => {
-                const isLockedByMe = order.checkedBy === currentUser?.userId;
-                const isLockedByOthers = order.checkedBy && order.checkedBy !== currentUser?.userId;
+                const isLockedByMe = order.checkedBy === currentUser?.id;
+                const isLockedByOthers = order.checkedBy && order.checkedBy !== currentUser?.id;
                 const isExpanded = expandedOrderId === order.id;
                 const hasLifecycle = order.lifecycle && order.lifecycle.length > 0;
 
                 const handleCardClick = (e: React.MouseEvent) => {
                     // Prevent navigation if clicking on buttons or expanded content
                     if ((e.target as HTMLElement).closest('button')) return;
+
+                    // Disable navigation for admins
+                    if (isAdminView) return;
 
                     if (order.status === 'ORDER_CREATED') {
                         window.location.href = `/users/payment/${order.id}`;
@@ -48,7 +61,7 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision }:
                     <div
                         key={order.id}
                         onClick={handleCardClick}
-                        className="bg-[#1a1b23] border border-gray-800 rounded-2xl p-4 space-y-3 shadow-lg active:scale-[0.98] transition-transform cursor-pointer"
+                        className={`bg-[#1a1b23] border border-gray-800 rounded-2xl p-4 space-y-3 shadow-lg active:scale-[0.98] transition-transform ${isAdminView ? '' : 'cursor-pointer'}`}
                     >
 
 
@@ -60,7 +73,14 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision }:
                                     {format(new Date(order.createdAt), "MMM d, yyyy h:mm a")}
                                 </div>
                             </div>
-                            <StatusBadge status={order.status} />
+                            <div className="flex items-center gap-2">
+                                {isAdminView && order.paymentFailureReason && (
+                                    <div className="text-red-500 animate-pulse" title="Payment Failed - Needs Attention">
+                                        <AlertTriangle size={16} />
+                                    </div>
+                                )}
+                                <StatusBadge status={order.status} />
+                            </div>
                         </div>
 
                         {/* Nexa Amount */}
@@ -164,11 +184,33 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision }:
                                 )}
 
                                 {/* Completed States */}
-                                {["ADMIN_APPROVED", "RELEASE_PAYMENT"].includes(order.status) && (
+                                {/* Completed States */}
+                                {order.status === "RELEASE_PAYMENT" && (
                                     <div className="text-center text-sm text-emerald-500">Completed</div>
+                                )}
+                                {order.status === "ADMIN_APPROVED" && (
+                                    <div className="text-center text-sm text-orange-400">Transfer Pending</div>
                                 )}
                                 {order.status === "REJECTED" && (
                                     <div className="text-center text-sm text-red-500">Rejected</div>
+                                )}
+
+                                {/* Payment Failed - Retry Option */}
+                                {order.paymentFailureReason && (
+                                    <div className="space-y-2">
+                                        <div className="bg-orange-500/10 rounded-lg p-3 text-xs text-orange-400 flex gap-2">
+                                            <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                                            <span>{order.paymentFailureReason}</span>
+                                        </div>
+                                        <button
+                                            onClick={(e) => handleReprocess(e, order.id)}
+                                            disabled={!!processingId}
+                                            className="w-full py-2 bg-blue-600/10 text-blue-500 rounded-lg text-sm font-medium hover:bg-blue-600/20 flex justify-center items-center gap-2 transition-colors disabled:opacity-50"
+                                        >
+                                            <RefreshCw size={14} className={processingId === order.id ? "animate-spin" : ""} />
+                                            Retry Payment
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         )}

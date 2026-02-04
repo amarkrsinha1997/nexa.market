@@ -65,7 +65,7 @@ export default function ProfilePage() {
                 <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-800 mb-4 overflow-hidden border-2 border-gray-700">
                     {user.picture ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={user.picture} alt={user.name} className="w-full h-full object-cover" />
+                        <img src={user.picture || undefined} alt={user.name || "User"} className="w-full h-full object-cover" />
                     ) : (
                         <UserIcon className="text-gray-400" size={40} />
                     )}

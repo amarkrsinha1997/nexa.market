@@ -18,17 +18,11 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             success: true,
             data: {
-                user: {
-                    userId: result.user.id,
-                    email: result.user.email,
-                    name: result.user.name,
-                    role: result.user.role,
-                    picture: result.user.picture,
-                    isNewUser: result.isNewUser,
-                },
+                user: result.user,
                 isNewUser: result.isNewUser,
                 refreshToken: result.refreshToken,
                 idToken: result.idToken,
+                accessToken: result.accessToken,
                 // We could add expiry if available, but for now strict to snippet return types
             },
             message: result.isNewUser

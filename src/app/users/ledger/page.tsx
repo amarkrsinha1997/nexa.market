@@ -6,7 +6,7 @@ import { apiClient } from "@/lib/api/client";
 import { FileText, Coins, Filter, AlertTriangle } from "lucide-react";
 import LedgerTable from "@/components/features/ledger/LedgerTable";
 import LedgerList from "@/components/features/ledger/LedgerList";
-import PendingPaymentsTable from "@/components/admin/PendingPaymentsTable"; // Import new component
+// import PendingPaymentsTable from "@/components/admin/PendingPaymentsTable"; // Removed: Unified view
 import { Order } from "@/types/order";
 
 type FilterType = "all" | "confirmed" | "verified" | "pending" | "released" | "rejected" | "transfer_failed";
@@ -108,6 +108,21 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
         }
     };
 
+    const handleReprocessPayment = async (orderId: string) => {
+        try {
+            const res = await apiClient.post(`/admin/orders/${orderId}/reprocess-payment`, {});
+            if (res.success) {
+                await fetchOrders(1); // Refresh list
+                alert("Payment retry initiated successfully.");
+            } else {
+                alert(`Failed: ${res.message}`);
+            }
+        } catch (error) {
+            console.error("Reprocess failed", error);
+            alert("Reprocess failed. Check console.");
+        }
+    };
+
     const handleLoadMore = () => {
         if (!loadingMore && hasMore) {
             fetchOrders(page + 1);
@@ -152,7 +167,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                                     }`}
                             >
                                 <AlertTriangle size={14} />
-                                TRANSFER FAILED
+                                TRANSFER PENDING
                             </button>
                             <button
                                 onClick={() => setFilter("released")}
@@ -182,56 +197,53 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                     <Coins className="mx-auto text-gray-600 mb-4" size={48} />
                     <h3 className="text-lg font-medium text-white">No transactions yet</h3>
                     <p className="text-gray-400 text-sm mt-2">
-                        {filter === 'transfer_failed' ? "No failed payments found." : "Any purchases or deposits will appear here."}
+                        {filter === 'transfer_failed' ? "No pending transfers found." : "Any purchases or deposits will appear here."}
                     </p>
                 </div>
             ) : (
                 <div className="space-y-6">
-                    {filter === 'transfer_failed' ? (
-                        <PendingPaymentsTable
-                            orders={orders}
-                            onRefresh={() => fetchOrders(page)}
-                        />
-                    ) : (
-                        <>
-                            {/* Desktop View */}
-                            <div className="hidden md:block bg-[#1a1b23] rounded-2xl border border-gray-800 overflow-hidden shadow-xl">
-                                <LedgerTable
-                                    orders={orders}
-                                    currentUser={user}
-                                    onCheck={handleCheckOrder}
-                                    onDecision={handleOrderDecision}
-                                />
-                            </div>
+                    <div className="space-y-6">
+                        {/* Unified View for All Filters including Transfer Failed */}
 
-                            {/* Mobile View */}
-                            <LedgerList
+                        {/* Desktop View */}
+                        <div className="hidden md:block bg-[#1a1b23] rounded-2xl border border-gray-800 overflow-hidden shadow-xl">
+                            <LedgerTable
                                 orders={orders}
                                 currentUser={user}
                                 onCheck={handleCheckOrder}
                                 onDecision={handleOrderDecision}
+                                onReprocess={handleReprocessPayment}
                             />
-                        </>
-                    )}
-
-                    {hasMore && (
-                        <div className="flex justify-center pb-8">
-                            <button
-                                onClick={handleLoadMore}
-                                disabled={loadingMore}
-                                className="bg-gray-800 hover:bg-gray-700 text-gray-200 px-6 py-2 rounded-full text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
-                            >
-                                {loadingMore ? (
-                                    <>
-                                        <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                                        Loading...
-                                    </>
-                                ) : (
-                                    "Load More"
-                                )}
-                            </button>
                         </div>
-                    )}
+
+                        {/* Mobile View */}
+                        <LedgerList
+                            orders={orders}
+                            currentUser={user}
+                            onCheck={handleCheckOrder}
+                            onDecision={handleOrderDecision}
+                            onReprocess={handleReprocessPayment}
+                        />
+
+                        {hasMore && (
+                            <div className="flex justify-center pb-8">
+                                <button
+                                    onClick={handleLoadMore}
+                                    disabled={loadingMore}
+                                    className="bg-gray-800 hover:bg-gray-700 text-gray-200 px-6 py-2 rounded-full text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    {loadingMore ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                                            Loading...
+                                        </>
+                                    ) : (
+                                        "Load More"
+                                    )}
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>

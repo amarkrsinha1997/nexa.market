@@ -13,7 +13,7 @@ export default function PaymentConfirmation({ onConfirm, confirming }: PaymentCo
         <button
             onClick={onConfirm}
             disabled={confirming}
-            className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-900/20 transition-all active:scale-[0.98]"
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98]"
         >
             {confirming ? <Loader2 className="animate-spin mx-auto" /> : "I have made the payment"}
         </button>

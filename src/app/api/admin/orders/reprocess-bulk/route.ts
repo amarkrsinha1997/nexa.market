@@ -1,19 +1,17 @@
+
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyAdminRequest } from "@/lib/utils/admin-auth";
 import { blockchainService } from "@/lib/services/blockchain.service";
 import { nexaConfig } from "@/lib/config/nexa.config";
 import { OrderStatus } from "@prisma/client";
+import { AuthService, ApiError } from "@/lib/services/auth.service";
 
 export async function POST(req: Request) {
     try {
         // 1. Verify Admin Auth
-        const authResult = await verifyAdminRequest(req);
-        if (authResult instanceof NextResponse) {
-            return authResult;
-        }
+        const admin = await AuthService.authenticate(req);
+        AuthService.isAdminOrThrowError(admin);
 
-        const { user: admin } = authResult;
         const body = await req.json();
         const { orderIds } = body;
 
@@ -62,7 +60,7 @@ export async function POST(req: Request) {
                 );
 
                 if (!addressValidation.valid || addressValidation.network !== nexaConfig.network) {
-                    failureReason = `Invalid wallet address: ${addressValidation.error || 'Network mismatch'}`;
+                    failureReason = `Invalid wallet address: ${addressValidation.error || 'Network mismatch'} `;
                 } else {
                     // Check balance
                     const currentBalance = blockchainService.fundBalance;
@@ -83,11 +81,11 @@ export async function POST(req: Request) {
                                 failureReason = null;
                                 successCount++;
                             } else {
-                                failureReason = `Transfer failed: ${paymentResult.error}`;
+                                failureReason = `Transfer failed: ${paymentResult.error} `;
                                 failureCount++;
                             }
                         } catch (err) {
-                            failureReason = `Transfer exception: ${err instanceof Error ? err.message : String(err)}`;
+                            failureReason = `Transfer exception: ${err instanceof Error ? err.message : String(err)} `;
                             failureCount++;
                         }
                     }
@@ -115,7 +113,7 @@ export async function POST(req: Request) {
                 actorId: admin.id,
                 actorName: admin.name,
                 action: 'PAYMENT_RETRY_SUCCESS' as const,
-                note: `Payment released to ${order.user.nexaWalletAddress}`,
+                note: `Payment released to ${order.user.nexaWalletAddress} `,
                 txHash,
                 recipientAddress: order.user.nexaWalletAddress,
                 bulkRetry: true

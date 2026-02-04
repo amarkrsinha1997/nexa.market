@@ -1,4 +1,5 @@
 import { OAuth2Client } from "google-auth-library";
+import { SignJWT, jwtVerify } from "jose";
 import { prisma } from "@/lib/prisma";
 import { User, Prisma } from "@prisma/client";
 
@@ -37,7 +38,7 @@ export class AuthService {
         );
     }
 
-    public static async verifyGoogleToken(token: string): Promise<GoogleTokenPayload> {
+    static async verifyGoogleToken(token: string): Promise<GoogleTokenPayload> {
         const client = this.getGoogleClient();
         const ticket = await client.verifyIdToken({
             idToken: token,
@@ -56,6 +57,31 @@ export class AuthService {
         };
     }
 
+    private static getJwtSecret(): Uint8Array {
+        const secret = process.env.JWT_SECRET || "default_super_secret_dev_key_change_in_prod";
+        return new TextEncoder().encode(secret);
+    }
+
+    static async createSessionToken(user: User): Promise<string> {
+        const secret = this.getJwtSecret();
+        const token = await new SignJWT({ userId: user.id, email: user.email, role: user.role })
+            .setProtectedHeader({ alg: 'HS256' })
+            .setIssuedAt()
+            .setExpirationTime('30d') // 30 Days expiration
+            .sign(secret);
+        return token;
+    }
+
+    static async verifySessionToken(token: string): Promise<any> {
+        try {
+            const secret = this.getJwtSecret();
+            const { payload } = await jwtVerify(token, secret);
+            return payload;
+        } catch (error) {
+            throw new ApiError("Invalid Session Token", "INVALID_TOKEN", 401);
+        }
+    }
+
     static async authenticateWithGoogle(params: {
         googleToken?: string;
         code?: string;
@@ -65,6 +91,7 @@ export class AuthService {
         isNewUser: boolean;
         refreshToken?: string | null;
         idToken?: string | null;
+        accessToken: string; // Our custom session token
     }> {
         try {
             let googlePayload: GoogleTokenPayload;
@@ -127,6 +154,8 @@ export class AuthService {
                 });
             }
 
+            const sessionToken = await this.createSessionToken(user);
+
             console.log("[AuthService] User authenticated", {
                 userId: user.id,
                 email: user.email,
@@ -138,7 +167,8 @@ export class AuthService {
                 user,
                 isNewUser,
                 refreshToken,
-                idToken
+                idToken,
+                accessToken: sessionToken
             };
         } catch (error: any) {
             console.error("Google authentication failed", error);
@@ -170,6 +200,60 @@ export class AuthService {
         } catch (error) {
             console.error("Token refresh failed", error);
             throw new ApiError("Failed to refresh token", ErrorCode.INVALID_GOOGLE_TOKEN, 401);
+        }
+    }
+
+    /**
+     * Authenticates the request by verifying the Bearer token and fetching the user.
+     * @param req - The incoming request object.
+     * @returns {Promise<User>} - The authenticated user.
+     * @throws {ApiError} - If authentication fails.
+     */
+    static async authenticate(req: Request): Promise<User> {
+        const authHeader = req.headers.get("Authorization");
+        if (!authHeader?.startsWith("Bearer ")) {
+            throw new ApiError("Unauthorized: Missing Token", "UNAUTHORIZED", 401);
+        }
+
+        const token = authHeader.split(" ")[1];
+        let userId: string | undefined;
+
+        // 1. Try Custom Session Token
+        try {
+            const payload = await this.verifySessionToken(token);
+            userId = payload.userId as string;
+        } catch (sessionError) {
+            // 2. Fallback to Google Token (Legacy support)
+            try {
+                const googlePayload = await this.verifyGoogleToken(token);
+                // Look up user by email since we don't have ID in Google Token
+                const userByEmail = await prisma.user.findUnique({ where: { email: googlePayload.email } });
+                if (!userByEmail) throw new ApiError("User not found", ErrorCode.USER_NOT_FOUND, 401);
+                return userByEmail;
+            } catch (googleError) {
+                // Both failed
+                throw new ApiError("Unauthorized: Invalid Token", ErrorCode.INVALID_GOOGLE_TOKEN, 401);
+            }
+        }
+
+        if (!userId) {
+            throw new ApiError("Unauthorized: Invalid Token Payload", ErrorCode.INVALID_GOOGLE_TOKEN, 401);
+        }
+
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) {
+            throw new ApiError("Unauthorized: User not found", ErrorCode.USER_NOT_FOUND, 401);
+        }
+
+        return user;
+    }
+
+    /**
+     * Assert that the user is an admin, otherwise throw an error.
+     */
+    static isAdminOrThrowError(user: User): void {
+        if (user.role !== "ADMIN" && user.role !== "SUPERADMIN") {
+            throw new ApiError("Forbidden: Admin access required", "FORBIDDEN", 403);
         }
     }
 }
