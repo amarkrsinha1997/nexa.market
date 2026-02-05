@@ -18,6 +18,7 @@ import { User, Order, OrderStatus } from "@prisma/client";
 import { UPIUrlBuilder } from "@/lib/utils/upi-url-builder";
 import { AuthService } from "@/lib/services/auth.service";
 import { NotificationService } from "@/lib/services/notification.service";
+import "@/lib/server-init";
 
 BlockchainService.instance();
 export class ApiError extends Error {
@@ -195,9 +196,9 @@ export class OrdersService {
 
         // Notify Admins
         await NotificationService.sendToAdmins(
-            "New Payment Received",
-            `${currentUser.name || currentUser.username || currentUser.email} has confirmed payment of ₹${order.amountINR}.`,
-            "INFO",
+            "🚀 Payment Received",
+            `${currentUser.name || currentUser.username || currentUser.email} has confirmed payment of ₹${order.amountINR}. Action required!`,
+            "SUCCESS",
             `/admin/orders/${orderId}`
         );
 

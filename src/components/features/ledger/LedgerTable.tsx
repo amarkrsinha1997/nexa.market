@@ -5,7 +5,7 @@ import { User } from "@prisma/client";
 import { format } from "date-fns";
 import { formatNexaAmount } from "@/lib/utils/format";
 import StatusBadge from "@/components/ui/StatusBadge";
-import { Check, ThumbsUp, ThumbsDown, Lock, ChevronDown, ChevronUp, ShieldCheck, AlertTriangle, RefreshCw } from "lucide-react";
+import { Check, ThumbsUp, ThumbsDown, Lock, ChevronDown, ChevronUp, ShieldCheck, AlertTriangle, RefreshCw, Zap } from "lucide-react";
 import { useState, Fragment } from "react";
 import LifecycleViewer from "./LifecycleViewer";
 
@@ -60,10 +60,15 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision, 
                         const isExpanded = expandedOrderId === order.id;
                         const hasLifecycle = order.lifecycle && order.lifecycle.length > 0;
 
+                        // Highlight orders pending for more than 5 minutes
+                        const orderDate = new Date(order.createdAt);
+                        const isOldPending = (order.status === "VERIFICATION_PENDING" || order.status === "VERIFYING") &&
+                            (Date.now() - orderDate.getTime() > 5 * 60 * 1000);
+
                         return (
                             <Fragment key={order.id}>
                                 <tr
-                                    className={`hover:bg-gray-800/50 transition-colors ${isAdminView ? '' : 'cursor-pointer'}`}
+                                    className={`hover:bg-gray-800/50 transition-colors ${isAdminView ? '' : 'cursor-pointer'} ${isOldPending ? 'bg-amber-500/5' : ''}`}
                                     onClick={() => {
                                         if (isAdminView) return;
 
@@ -150,6 +155,11 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision, 
                                             {isAdminView && order.paymentFailureReason && (
                                                 <div className="text-red-500 animate-pulse" title="Payment Failed - Needs Attention">
                                                     <AlertTriangle size={16} />
+                                                </div>
+                                            )}
+                                            {isAdminView && isOldPending && (
+                                                <div className="text-amber-500 animate-bounce" title="Fast Action Required (>5 mins pending)">
+                                                    <Zap size={14} fill="currentColor" />
                                                 </div>
                                             )}
                                             <StatusBadge status={order.status} />

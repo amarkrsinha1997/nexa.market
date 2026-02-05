@@ -7,6 +7,7 @@ import { UserApi } from "@/lib/api/user";
 import { LocalStorageUtils } from "@/lib/utils/storage";
 import { User } from "@prisma/client";
 import { ROLES } from "@/lib/config/roles";
+import { ImageCacheUtils } from "@/lib/utils/image-cache";
 
 interface AuthContextType {
     user: User | null;
@@ -57,6 +58,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     if (freshUser) {
                         setUser(freshUser);
                         LocalStorageUtils.setUser(freshUser);
+                        if (freshUser.picture) {
+                            ImageCacheUtils.cacheImage(freshUser.id, freshUser.picture);
+                        }
                         handleOnboardingRedirect(freshUser);
                     } else {
                         fallbackToStored();
@@ -121,6 +125,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (response.success && response.data) {
             setUser(response.data.user);
             LocalStorageUtils.setUser(response.data.user);
+            if (response.data.user.picture) {
+                ImageCacheUtils.cacheImage(response.data.user.id, response.data.user.picture);
+            }
             return response.data;
         }
         throw new Error("Login failed");
@@ -142,6 +149,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (updatedUser) {
                 setUser(updatedUser);
                 LocalStorageUtils.setUser(updatedUser);
+                if (updatedUser.picture) {
+                    ImageCacheUtils.cacheImage(updatedUser.id, updatedUser.picture);
+                }
             }
         } catch (e) {
             console.error("Failed to refetch profile", e);

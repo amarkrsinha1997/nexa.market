@@ -3,6 +3,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { prisma } from "@/lib/prisma";
 import { User, Prisma } from "@prisma/client";
 import { ROLES } from "@/lib/config/roles";
+import "@/lib/server-init";
 
 export class ApiError extends Error {
     statusCode: number;

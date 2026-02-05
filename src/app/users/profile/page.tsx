@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { apiClient } from "@/lib/api/client";
 import PhoneInput from "@/components/ui/PhoneInput";
+import { ImageCacheUtils } from "@/lib/utils/image-cache";
 import Link from "next/link";
 import CopyButton from "@/components/ui/CopyButton";
 import { Save, User as UserIcon, Calendar, Mail, Wallet, ChevronRight, LogOut } from "lucide-react";
@@ -15,13 +16,24 @@ export default function ProfilePage() {
     // Phone State
     const [countryCode, setCountryCode] = useState("+1");
     const [localPhoneNumber, setLocalPhoneNumber] = useState("");
+    const [profileImage, setProfileImage] = useState<string | null>(null);
 
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     // Initial Load
     useEffect(() => {
-        if (user?.phoneNumber) {
+        if (!user) return;
+
+        // Try to get cached image first
+        const cached = ImageCacheUtils.getCachedImage(user.id);
+        if (cached) {
+            setProfileImage(cached);
+        } else if (user.picture) {
+            setProfileImage(user.picture);
+        }
+
+        if (user.phoneNumber) {
             // Simple split logic, ideally use a lib to parse strictly if needed
             // Assuming format "+Code Number" from Onboarding
             const parts = user.phoneNumber.split(" ");
@@ -63,9 +75,9 @@ export default function ProfilePage() {
         <div className="max-w-md mx-auto space-y-6 pt-8 pb-20"> {/* pb-20 for mobile footer clearance */}
             <header className="text-center space-y-1">
                 <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-800 mb-4 overflow-hidden border-2 border-gray-700">
-                    {user.picture ? (
+                    {profileImage ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={user.picture || undefined} alt={user.name || "User"} className="w-full h-full object-cover" />
+                        <img src={profileImage} alt={user.name || "User"} className="w-full h-full object-cover" />
                     ) : (
                         <UserIcon className="text-gray-400" size={40} />
                     )}
