@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { AuthService, ApiError } from "@/lib/services/auth.service";
 import { OrdersService, ApiError as OrdersApiError } from "@/lib/services/orders.service";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(
     req: Request,
@@ -19,6 +20,20 @@ export async function POST(
 
         const resolvedParams = await params;
         const orderId = resolvedParams.id;
+
+        // Idempotency Check
+        const currentOrder = await prisma.order.findUnique({
+            where: { id: orderId }
+        });
+
+        if (currentOrder) {
+            if (decision === 'APPROVE' && (currentOrder.status === 'ADMIN_APPROVED' || currentOrder.status === 'RELEASE_PAYMENT')) {
+                return NextResponse.json({ success: true, data: currentOrder });
+            }
+            if (decision === 'REJECT' && currentOrder.status === 'REJECTED') {
+                return NextResponse.json({ success: true, data: currentOrder });
+            }
+        }
 
         const updatedOrder = await OrdersService.processDecision(orderId, admin, decision, reason);
 

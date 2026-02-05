@@ -28,22 +28,44 @@ export class NotificationService {
             throw new Error("Invalid subscription data");
         }
 
-        // Check if subscription exists
-        const existing = await prisma.pushSubscription.findUnique({
+        // Check if THIS specific endpoint already exists (e.g. same browser)
+        const existingEndpoint = await prisma.pushSubscription.findUnique({
             where: { endpoint: subscription.endpoint }
         });
 
-        if (existing) {
-            // Update if user changed (e.g. logout/login)
-            if (existing.userId !== userId) {
+        if (existingEndpoint) {
+            // Update user association if changed
+            if (existingEndpoint.userId !== userId) {
                 await prisma.pushSubscription.update({
-                    where: { id: existing.id },
+                    where: { id: existingEndpoint.id },
                     data: { userId }
                 });
             }
-            return existing;
+            return existingEndpoint;
         }
 
+        // STRICT REQUIREMENT: Only 1 row per user.
+        // Check if user has ANY other subscription
+        const existingUserSub = await prisma.pushSubscription.findFirst({
+            where: { userId }
+        });
+
+        if (existingUserSub) {
+            // Update the existing subscription with the NEW endpoint/keys
+            // This effectively "moves" the subscription to the new device/browser
+            // and keeps db cleanup.
+            return await prisma.pushSubscription.update({
+                where: { id: existingUserSub.id },
+                data: {
+                    endpoint: subscription.endpoint,
+                    keys: subscription.keys || {},
+                    userAgent,
+                    updatedAt: new Date() // bumping update time
+                }
+            });
+        }
+
+        // Create new if none exists
         return await prisma.pushSubscription.create({
             data: {
                 userId,

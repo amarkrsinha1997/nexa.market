@@ -19,7 +19,16 @@ export function useNotifications() {
     const checkSubscription = async () => {
         const registration = await navigator.serviceWorker.ready;
         const subscription = await registration.pushManager.getSubscription();
-        setIsSubscribed(!!subscription);
+
+        // Also check DB status
+        try {
+            const response = await apiClient.get<{ subscribed: boolean }>('/notifications/subscribe');
+            // Check if response has property directly or inside data (depending on apiClient implementation)
+            // Assuming apiClient returns the JSON body directly based on usage elsewhere
+            setIsSubscribed(!!subscription || !!(response as any).subscribed);
+        } catch (e) {
+            setIsSubscribed(!!subscription);
+        }
     };
 
     const urlBase64ToUint8Array = (base64String: string) => {

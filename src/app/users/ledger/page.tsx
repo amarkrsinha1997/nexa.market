@@ -162,7 +162,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
     );
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6 pt-8 pb-20">
+        <div className="max-w-7xl mx-auto space-y-4 pt-4 pb-12">
             <header className="px-4 md:px-0 space-y-4">
                 <h1 className="text-2xl font-bold text-white flex items-center gap-2">
                     Ledger
@@ -231,18 +231,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                     <div className="space-y-6">
                         {/* Unified View for All Filters including Transfer Failed */}
 
-                        {/* Desktop View */}
-                        <div className="hidden md:block bg-[#1a1b23] rounded-2xl border border-gray-800 overflow-hidden shadow-xl">
-                            <LedgerTable
-                                orders={orders}
-                                currentUser={user}
-                                onCheck={handleCheckOrder}
-                                onDecision={handleOrderDecision}
-                                onReprocess={handleReprocessPayment}
-                            />
-                        </div>
-
-                        {/* Mobile View */}
+                        {/* Unified Card View */}
                         <LedgerList
                             orders={orders}
                             currentUser={user}
@@ -250,6 +239,8 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                             onDecision={handleOrderDecision}
                             onReprocess={handleReprocessPayment}
                         />
+
+
 
                         {hasMore && (
                             <div className="flex justify-center pb-8">

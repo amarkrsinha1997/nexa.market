@@ -36,7 +36,7 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision, o
     };
 
     return (
-        <div className="md:hidden space-y-4 px-4">
+        <div className="flex flex-col gap-2 px-4 md:px-0">
             {orders.map((order) => {
                 const isLockedByMe = order.checkedBy === currentUser?.id;
                 const isLockedByOthers = order.checkedBy && order.checkedBy !== currentUser?.id;
@@ -61,7 +61,7 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision, o
                     <div
                         key={order.id}
                         onClick={handleCardClick}
-                        className={`bg-[#1a1b23] border border-gray-800 rounded-2xl p-4 space-y-3 shadow-lg active:scale-[0.98] transition-transform ${isAdminView ? '' : 'cursor-pointer'}`}
+                        className={`bg-[#1a1b23] border border-gray-800 rounded-xl p-3 space-y-1.5 shadow-sm hover:shadow-md hover:border-gray-700 active:scale-[0.99] transition-all ${isAdminView ? '' : 'cursor-pointer'}`}
                     >
 
 
@@ -92,25 +92,27 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision, o
                         {/* Amount and Status */}
                         <div className="flex justify-between items-start">
                             <div>
-                                <div className="text-red-500 font-medium text-base">- ₹{order.amountINR.toFixed(2)}</div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                    {format(new Date(order.createdAt), "MMM d, yyyy h:mm a")}
+                                <div className="text-red-500 font-medium text-sm md:text-base">- ₹{order.amountINR.toFixed(2)}</div>
+                                <div className="text-[10px] md:text-xs text-gray-500 mt-0.5">
+                                    {format(new Date(order.createdAt), "MMM d, h:mm a")}
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                {isAdminView && order.paymentFailureReason && (
-                                    <div className="text-red-500 animate-pulse" title="Payment Failed - Needs Attention">
-                                        <AlertTriangle size={16} />
-                                    </div>
-                                )}
-                                <StatusBadge status={order.status} />
+                            <div className="scale-90 origin-right">
+                                <div className="flex items-center gap-2">
+                                    {isAdminView && order.paymentFailureReason && (
+                                        <div className="text-red-500 animate-pulse" title="Payment Failed - Needs Attention">
+                                            <AlertTriangle size={14} />
+                                        </div>
+                                    )}
+                                    <StatusBadge status={order.status} />
+                                </div>
                             </div>
                         </div>
 
                         {/* Nexa Amount */}
-                        <div className="flex justify-between items-center text-sm bg-[#0f1016] p-3 rounded-lg border border-gray-800/50">
+                        <div className="flex justify-between items-center text-xs bg-[#0f1016] p-1.5 rounded-md border border-gray-800/50">
                             <span className="text-gray-400 flex items-center gap-1">
-                                <Coins size={12} /> Nexa
+                                <Coins size={10} /> Nexa
                             </span>
                             <span className="text-green-500 font-mono font-medium">+ {formatNexaAmount(order.nexaAmount)}</span>
                         </div>
