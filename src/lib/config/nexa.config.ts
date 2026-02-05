@@ -9,17 +9,18 @@ interface NexaConfig {
     providerUrl?: string;
     network: NetworkType;
     fundSeedPhrase: string;
-    interestSeedPhrase: string;
 }
 
 function validateConfig(): NexaConfig {
     const network = (process.env.NEXA_NETWORK || 'testnet') as NetworkType;
     const fundSeedPhrase = process.env.NEXA_FUND_SEED_PHRASE || '';
-    const interestSeedPhrase = process.env.NEXA_INTEREST_SEED_PHRASE || '';
 
-    if (!fundSeedPhrase || !interestSeedPhrase) {
+    const missingPhrases = [];
+    if (!fundSeedPhrase) missingPhrases.push('NEXA_FUND_SEED_PHRASE');
+
+    if (missingPhrases.length > 0) {
         console.warn(
-            '⚠️  WARNING: Nexa seed phrases are missing. Blockchain operations will fail.'
+            `⚠️  WARNING: Nexa seed phrases are missing (${missingPhrases.join(', ')}). Blockchain operations using these wallets will fail.`
         );
     }
 
@@ -33,7 +34,6 @@ function validateConfig(): NexaConfig {
         providerUrl: process.env.NEXA_PROVIDER_URL,
         network: network === 'mainnet' ? 'mainnet' : 'testnet',
         fundSeedPhrase,
-        interestSeedPhrase,
     };
 }
 

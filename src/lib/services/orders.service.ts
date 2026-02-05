@@ -12,13 +12,14 @@
 import { prisma } from "@/lib/prisma";
 import { ConfigService } from "@/lib/services/config.service";
 import { UPISelectorService } from "@/lib/services/upi-selector.service";
-import { blockchainService } from "@/lib/services/blockchain.service";
+import { BlockchainService } from "@/lib/services/blockchain.service";
 import { nexaConfig } from "@/lib/config/nexa.config";
 import { User, Order, OrderStatus } from "@prisma/client";
 import { UPIUrlBuilder } from "@/lib/utils/upi-url-builder";
 import { AuthService } from "@/lib/services/auth.service";
 import { NotificationService } from "@/lib/services/notification.service";
 
+BlockchainService.instance();
 export class ApiError extends Error {
     constructor(public message: string, public statusCode: number = 500) {
         super(message);
@@ -273,10 +274,12 @@ export class OrdersService {
 
             // Payment Logic
             if (order.user.nexaWalletAddress) {
+                const blockchainService = await BlockchainService.instance();
                 const addressValidation = blockchainService.validateAddress(order.user.nexaWalletAddress, nexaConfig.network);
 
                 if (addressValidation.valid && addressValidation.network === nexaConfig.network) {
                     const currentBalance = blockchainService.fundBalance;
+                    console.log(currentBalance, order.nexaAmount)
                     if (currentBalance < order.nexaAmount) {
                         failureReason = `Insufficient balance: Required ${order.nexaAmount} NEX, Available ${currentBalance} NEX`;
                     } else {
@@ -376,6 +379,15 @@ export class OrdersService {
                 "WARNING",
                 `/admin/orders/${orderId}`
             );
+
+            // Also Notify the User
+            await NotificationService.sendToUser(
+                order.userId,
+                "Order Rejected",
+                `Your order #${orderId.slice(0, 8)} has been rejected: ${reason || 'Please contact support.'}`,
+                "ERROR",
+                `/users/orders/${orderId}`
+            );
         }
 
         if (newStatus === 'RELEASE_PAYMENT') {
@@ -414,6 +426,7 @@ export class OrdersService {
         if (!order.user.nexaWalletAddress) {
             failureReason = 'User has no Nexa wallet address';
         } else {
+            const blockchainService = await BlockchainService.instance();
             const addressValidation = blockchainService.validateAddress(order.user.nexaWalletAddress, nexaConfig.network);
             if (!addressValidation.valid || addressValidation.network !== nexaConfig.network) {
                 failureReason = `Invalid wallet address: ${addressValidation.error || 'Network mismatch'}`;

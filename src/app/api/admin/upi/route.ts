@@ -1,21 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { AuthService } from "@/lib/services/auth.service";
-import { ROLES } from "@/lib/config/roles";
 
-// Middleware helper (simplified)
-async function verifyAdmin(req: NextRequest) {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return null;
-    try {
-        const payload = await AuthService.verifyGoogleToken(authHeader.split(" ")[1]);
-        const user = await prisma.user.findUnique({ where: { email: payload.email } });
-        if (!user || (user.role !== ROLES.ADMIN && user.role !== ROLES.SUPERADMIN)) return null;
-        return user;
-    } catch (e) {
-        return null;
-    }
-}
 
 // Validate time format (HH:mm)
 function isValidTimeFormat(time: string | null | undefined): boolean {
@@ -25,7 +11,7 @@ function isValidTimeFormat(time: string | null | undefined): boolean {
 }
 
 export async function GET(req: NextRequest) {
-    if (!await verifyAdmin(req)) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    if (!await AuthService.verifyAdmin(req)) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
     try {
         const upis = await prisma.upi.findMany({
@@ -42,7 +28,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-    if (!await verifyAdmin(req)) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    if (!await AuthService.verifyAdmin(req)) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
     try {
         const {
@@ -90,7 +76,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-    if (!await verifyAdmin(req)) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    if (!await AuthService.verifyAdmin(req)) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
     try {
         const { id, isActive } = await req.json();
@@ -107,7 +93,7 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-    if (!await verifyAdmin(req)) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    if (!await AuthService.verifyAdmin(req)) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
     try {
         const { searchParams } = new URL(req.url);

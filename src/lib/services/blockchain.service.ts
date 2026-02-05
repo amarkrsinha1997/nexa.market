@@ -51,17 +51,18 @@ export class BlockchainService {
 
             console.log('[BlockchainService] Initializing fund wallet...');
             this.fundWallet = new Wallet(nexaConfig.fundSeedPhrase, nexaConfig.network);
-            await this.fundWallet.initialize();
+
+            await this.fundWallet?.initialize();
 
             this.isInitialized = true;
             console.log('[BlockchainService] Wallet initialized successfully');
 
             // Log wallet info
-            console.log('[BlockchainService] Fund Address:', this.fundAddress);
             console.log('[BlockchainService] Fund Balance:', this.fundBalance, 'NEX');
         } catch (error) {
             console.error('[BlockchainService] Failed to initialize wallet:', error);
-            throw error;
+            // Don't rethrow but mark as failed
+            this.isInitialized = false;
         }
     }
 
@@ -183,33 +184,6 @@ export class BlockchainService {
             };
         }
     }
-
-    /**
-     * Get balance for an address
-     */
-    async getBalance(address: string): Promise<string> {
-        if (!address) {
-            console.warn('[BlockchainService] getBalance called with empty address');
-            return '0';
-        }
-
-        if (address.length < 10) {
-            console.warn(`[BlockchainService] getBalance called with invalid address: ${address}`);
-            return '0';
-        }
-
-        try {
-            await this.ensureConnection();
-            const balance = await rostrumProvider.getBalance(address);
-            const confirmed = Number(balance.confirmed) || 0;
-            const unconfirmed = Number(balance.unconfirmed) || 0;
-            return (confirmed + unconfirmed).toString();
-        } catch (error) {
-            console.error(`[BlockchainService] Error fetching balance for ${address}:`, error);
-            return '0';
-        }
-    }
-
     /**
      * Process fund transfer (send funds to user)
      * Used for releasing payments to users upon admin approval
@@ -267,7 +241,7 @@ export class BlockchainService {
             const tx = await this.fundWallet
                 .newTransaction(account)
                 .onNetwork(nexaConfig.network)
-                .sendTo(toAddress, amount)
+                .sendTo(toAddress, String(Number(amount) * 100))
                 .populate()
                 .sign()
                 .build();
@@ -313,15 +287,6 @@ export class BlockchainService {
         const maxRetries = 3;
         const retryDelay = 1000;
 
-        // Check if already connected by pinging latency
-        try {
-            await rostrumProvider.getLatency();
-            return; // Connection is active
-        } catch (e) {
-            // Not connected, proceed to connect
-            console.log('[BlockchainService] Not connected, initiating connection...');
-        }
-
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 if (nexaConfig.providerUrl) {
@@ -336,7 +301,6 @@ export class BlockchainService {
                 }
 
                 // Verify connection
-                await rostrumProvider.getLatency();
                 console.log('[BlockchainService] Connected to blockchain');
                 return;
             } catch (error) {
@@ -363,9 +327,6 @@ export class BlockchainService {
         return this.fundWallet.accountStore.getAccount('2.0');
     }
 
-    public get fundAddress(): string {
-        return this.fundAccount?.getAddresses()[0].address || '';
-    }
 
     public get fundBalance(): number {
         const confirmed = Number(this.fundAccount?.balance.confirmed) || 0;
@@ -378,12 +339,10 @@ export class BlockchainService {
     }
 
     // Singleton instance
-    static instance(): BlockchainService {
+    static async instance(): Promise<BlockchainService> {
         if (this.blockchainService) return this.blockchainService;
         this.blockchainService = new BlockchainService();
-        this.blockchainService.init();
+        await this.blockchainService.init();
         return this.blockchainService;
     }
 }
-
-export const blockchainService = BlockchainService.instance();

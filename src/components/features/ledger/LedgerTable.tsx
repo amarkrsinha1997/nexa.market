@@ -236,8 +236,10 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision, 
                                 {/* Expandable lifecycle row */}
                                 {isAdminView && isExpanded && (
                                     <tr key={`${order.id}-lifecycle`} className="bg-[#0a0b0f]">
-                                        <td colSpan={9} className="px-6 py-0">
-                                            <LifecycleViewer lifecycle={order.lifecycle} />
+                                        <td colSpan={11} className="px-6 py-0">
+                                            <div className="p-4 bg-black/20 rounded-b-xl border-x border-b border-gray-800/30">
+                                                <LifecycleViewer lifecycle={order.lifecycle} orderUserId={order.userId} />
+                                            </div>
                                         </td>
                                     </tr>
                                 )}

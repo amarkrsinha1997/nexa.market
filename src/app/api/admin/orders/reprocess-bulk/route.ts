@@ -1,7 +1,7 @@
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { blockchainService } from "@/lib/services/blockchain.service";
+import { BlockchainService } from "@/lib/services/blockchain.service";
 import { nexaConfig } from "@/lib/config/nexa.config";
 import { OrderStatus } from "@prisma/client";
 import { AuthService, ApiError } from "@/lib/services/auth.service";
@@ -54,6 +54,7 @@ export async function POST(req: Request) {
                 failureReason = 'User has no Nexa wallet address';
             } else {
                 // Validate address
+                const blockchainService = await BlockchainService.instance();
                 const addressValidation = blockchainService.validateAddress(
                     order.user.nexaWalletAddress,
                     nexaConfig.network

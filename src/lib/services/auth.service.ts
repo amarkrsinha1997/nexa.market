@@ -2,6 +2,7 @@ import { OAuth2Client } from "google-auth-library";
 import { SignJWT, jwtVerify } from "jose";
 import { prisma } from "@/lib/prisma";
 import { User, Prisma } from "@prisma/client";
+import { ROLES } from "@/lib/config/roles";
 
 export class ApiError extends Error {
     statusCode: number;
@@ -252,8 +253,33 @@ export class AuthService {
      * Assert that the user is an admin, otherwise throw an error.
      */
     static isAdminOrThrowError(user: User): void {
-        if (user.role !== "ADMIN" && user.role !== "SUPERADMIN") {
+        if (user.role !== ROLES.ADMIN && user.role !== ROLES.SUPERADMIN) {
             throw new ApiError("Forbidden: Admin access required", "FORBIDDEN", 403);
+        }
+    }
+
+    /**
+     * Verify if the request is from an admin
+     */
+    static async verifyAdmin(req: Request): Promise<User | null> {
+        const authHeader = req.headers.get("Authorization");
+        if (!authHeader?.startsWith("Bearer ")) return null;
+        try {
+            const token = authHeader.split(" ")[1];
+            let payload: any;
+            try {
+                payload = await this.verifySessionToken(token);
+            } catch {
+                payload = await this.verifyGoogleToken(token);
+            }
+
+            if (!payload || !payload.email) return null;
+
+            const user = await prisma.user.findUnique({ where: { email: payload.email } });
+            if (!user || (user.role !== ROLES.ADMIN && user.role !== ROLES.SUPERADMIN)) return null;
+            return user;
+        } catch (e) {
+            return null;
         }
     }
 }

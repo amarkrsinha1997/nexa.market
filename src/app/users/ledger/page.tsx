@@ -3,7 +3,8 @@
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api/client";
-import { FileText, Coins, Filter, AlertTriangle } from "lucide-react";
+import { FileText, Coins, Filter, AlertTriangle, Loader2 } from "lucide-react";
+import { useSearchParams, useRouter } from "next/navigation";
 import LedgerTable from "@/components/features/ledger/LedgerTable";
 import LedgerList from "@/components/features/ledger/LedgerList";
 // import PendingPaymentsTable from "@/components/admin/PendingPaymentsTable"; // Removed: Unified view
@@ -12,14 +13,32 @@ import { Order } from "@/types/order";
 type FilterType = "all" | "confirmed" | "verified" | "pending" | "released" | "rejected" | "transfer_failed";
 
 export default function LedgerPage({ adminView = false }: { adminView?: boolean }) {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const tabParam = searchParams.get("tab") as FilterType;
+
     const [loadingMore, setLoadingMore] = useState(false);
-    const [filter, setFilter] = useState<FilterType>(adminView ? "pending" : "all");
+    const [filter, setFilter] = useState<FilterType>(tabParam || (adminView ? "pending" : "all"));
 
     const { user, loading: authLoading } = useAuth();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(false);
+
+    // Sync state with URL param if it changes externally
+    useEffect(() => {
+        if (tabParam && tabParam !== filter) {
+            setFilter(tabParam);
+        }
+    }, [tabParam]);
+
+    const updateFilter = (newFilter: FilterType) => {
+        setFilter(newFilter);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("tab", newFilter);
+        router.replace(`${window.location.pathname}?${params.toString()}`, { scroll: false });
+    };
 
     useEffect(() => {
         if (user) {
@@ -99,12 +118,14 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                 reason
             });
             if (res.success && res.data) {
-                // Refetch to ensure UI consistency with backend
-                await fetchOrders(1);
+                // Success case
             }
         } catch (error) {
             console.error("Failed to submit decision", error);
             alert("Failed to submit decision.");
+        } finally {
+            // Always refetch to ensure UI consistency (e.g. failure reason, lifecycle updates)
+            await fetchOrders(1);
         }
     };
 
@@ -112,7 +133,6 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
         try {
             const res = await apiClient.post(`/admin/orders/${orderId}/reprocess-payment`, {});
             if (res.success) {
-                await fetchOrders(1); // Refresh list
                 alert("Payment retry initiated successfully.");
             } else {
                 alert(`Failed: ${res.message}`);
@@ -120,6 +140,9 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
         } catch (error) {
             console.error("Reprocess failed", error);
             alert("Reprocess failed. Check console.");
+        } finally {
+            // Always refetch to reflect latest failure reason or status
+            await fetchOrders(1);
         }
     };
 
@@ -129,7 +152,9 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
         }
     };
 
-    if (authLoading || loading) return (
+    const isRefreshing = loading && orders.length > 0;
+
+    if (authLoading || (loading && orders.length === 0)) return (
         <div className="flex flex-col items-center justify-center min-h-[50vh] text-gray-500 space-y-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             <p>Loading ledger...</p>
@@ -141,6 +166,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
             <header className="px-4 md:px-0 space-y-4">
                 <h1 className="text-2xl font-bold text-white flex items-center gap-2">
                     Ledger
+                    {isRefreshing && <Loader2 size={16} className="animate-spin text-blue-500 ml-2" />}
                 </h1>
 
                 {/* Filter Buttons */}
@@ -151,7 +177,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                     ) : (
                         <>
                             <button
-                                onClick={() => setFilter("pending")}
+                                onClick={() => updateFilter("pending")}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "pending"
                                     ? "bg-amber-500/20 text-amber-500 border border-amber-500/50"
                                     : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
@@ -160,7 +186,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                                 NEXA PENDING
                             </button>
                             <button
-                                onClick={() => setFilter("transfer_failed")}
+                                onClick={() => updateFilter("transfer_failed")}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${filter === "transfer_failed"
                                     ? "bg-orange-500/20 text-orange-500 border border-orange-500/50"
                                     : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
@@ -170,7 +196,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                                 TRANSFER PENDING
                             </button>
                             <button
-                                onClick={() => setFilter("released")}
+                                onClick={() => updateFilter("released")}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "released"
                                     ? "bg-emerald-500/20 text-emerald-500 border border-emerald-500/50"
                                     : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
@@ -179,7 +205,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                                 NEXA RELEASED
                             </button>
                             <button
-                                onClick={() => setFilter("rejected")}
+                                onClick={() => updateFilter("rejected")}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "rejected"
                                     ? "bg-red-500/20 text-red-500 border border-red-500/50"
                                     : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"

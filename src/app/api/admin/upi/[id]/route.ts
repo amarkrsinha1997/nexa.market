@@ -1,20 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { AuthService } from "@/lib/services/auth.service";
-import { ROLES } from "@/lib/config/roles";
 
-async function verifyAdmin(req: NextRequest) {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return null;
-    try {
-        const payload = await AuthService.verifyGoogleToken(authHeader.split(" ")[1]);
-        const user = await prisma.user.findUnique({ where: { email: payload.email } });
-        if (!user || (user.role !== ROLES.ADMIN && user.role !== ROLES.SUPERADMIN)) return null;
-        return user;
-    } catch (e) {
-        return null;
-    }
-}
 
 function isValidTimeFormat(time: string | null | undefined): boolean {
     if (!time) return true;
@@ -26,7 +13,7 @@ export async function PUT(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    if (!await verifyAdmin(req)) {
+    if (!await AuthService.verifyAdmin(req)) {
         return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
@@ -85,7 +72,7 @@ export async function DELETE(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    if (!await verifyAdmin(req)) {
+    if (!await AuthService.verifyAdmin(req)) {
         return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 

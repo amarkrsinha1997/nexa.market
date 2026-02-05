@@ -80,15 +80,17 @@ export class NotificationService {
 
         const promises = subscriptions.map(async (sub) => {
             try {
-                await webpush.sendNotification(
+                console.log(`[NotificationService] Sending push to ${sub.id} (user: ${userId})`);
+                const response = await webpush.sendNotification(
                     {
                         endpoint: sub.endpoint,
                         keys: sub.keys as any
                     },
                     payload
                 );
+                console.log(`[NotificationService] Push sent: ${response.statusCode}`);
             } catch (error: any) {
-                console.error(`Failed to send push to ${sub.id}`, error);
+                console.error(`[NotificationService] Failed to send push to ${sub.id}`, error);
                 if (error.statusCode === 410 || error.statusCode === 404) {
                     // Subscription expired/gone
                     await prisma.pushSubscription.delete({ where: { id: sub.id } });
@@ -96,7 +98,6 @@ export class NotificationService {
             }
         });
 
-        await Promise.all(promises);
         await Promise.all(promises);
         return true;
     }
