@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import { apiClient } from '@/lib/api/client';
 
@@ -7,14 +9,6 @@ export function useNotifications() {
     const [isSupported, setIsSupported] = useState(false);
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [permission, setPermission] = useState<NotificationPermission>('default');
-
-    useEffect(() => {
-        if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
-            setIsSupported(true);
-            setPermission(Notification.permission);
-            checkSubscription();
-        }
-    }, []);
 
     const checkSubscription = async () => {
         const registration = await navigator.serviceWorker.ready;
@@ -45,6 +39,14 @@ export function useNotifications() {
         }
         return outputArray;
     };
+
+    useEffect(() => {
+        if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
+            setIsSupported(true);
+            setPermission(Notification.permission);
+            checkSubscription();
+        }
+    }, []);
 
     const subscribe = async () => {
         if (!isSupported) return;
