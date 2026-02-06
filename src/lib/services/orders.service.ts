@@ -367,7 +367,7 @@ export class OrdersService {
             }
         });
 
-        // Notifications for Admins
+        // Notifications
         if (decision === 'APPROVE') {
             await NotificationService.sendToAdmins(
                 "Order Approved",
@@ -375,6 +375,17 @@ export class OrdersService {
                 "SUCCESS",
                 `/admin/orders/${orderId}`
             );
+
+            // Notify user if payment was released
+            if (newStatus === 'RELEASE_PAYMENT') {
+                await NotificationService.sendToUser(
+                    order.userId,
+                    "🚀 Funds Released",
+                    `Great news! ₹${order.amountINR} has been processed and ${Math.round(order.nexaAmount)} NEX has been sent to your wallet.`,
+                    "SUCCESS",
+                    `/users/orders/${orderId}`
+                );
+            }
         } else if (decision === 'REJECT') {
             await NotificationService.sendToAdmins(
                 "Order Rejected",
@@ -496,13 +507,22 @@ export class OrdersService {
             }
         });
 
-        // Notify Admins only
+        // Notifications
         if (newStatus === 'RELEASE_PAYMENT') {
             await NotificationService.sendToAdmins(
                 "Retry Successful",
                 `Manual payment retry successful for Order #${orderId.slice(0, 8)} by ${adminUser.name || adminUser.email}.`,
                 "SUCCESS",
                 `/admin/orders/${orderId}`
+            );
+
+            // Notify User
+            await NotificationService.sendToUser(
+                order.userId,
+                "🚀 Funds Released",
+                `Great news! Your payment for order #${orderId.slice(0, 8)} (₹${order.amountINR}) has been released. ${Math.round(order.nexaAmount)} NEX is on its way!`,
+                "SUCCESS",
+                `/users/orders/${orderId}`
             );
         }
 
