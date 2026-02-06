@@ -20,7 +20,18 @@ export default function LandingPage() {
     });
 
     useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 20);
+        let scrolledPast50 = false;
+        const handleScroll = () => {
+            const scrolled = window.scrollY > 20;
+            setScrolled(scrolled);
+
+            // Track when user scrolls past 50% of page (engagement metric)
+            const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+            if (scrollPercent > 50 && !scrolledPast50) {
+                scrolledPast50 = true;
+                MixpanelUtils.track("Landing Scrolled 50%");
+            }
+        };
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
@@ -80,7 +91,10 @@ export default function LandingPage() {
             {/* Navigation */}
             <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-black/80 backdrop-blur-md border-b border-white/10 py-4' : 'bg-transparent py-6'}`}>
                 <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-                    <div className="flex items-center gap-3 group cursor-pointer">
+                    <div
+                        className="flex items-center gap-3 group cursor-pointer"
+                        onClick={() => MixpanelUtils.track("Landing Logo Clicked")}
+                    >
                         <div className="w-10 h-10 relative transition-transform duration-500 group-hover:rotate-[360deg]">
                             <Image src="/nexa-logo.png" alt="Nexa" fill className="object-contain" />
                         </div>
