@@ -14,14 +14,24 @@ export default function AdminLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const { isAdmin, loading } = useRole();
+    const { user, isAdmin, loading } = useRole();
     const router = useRouter();
     const pathname = usePathname();
 
     useEffect(() => {
         if (!loading) {
             if (!isAdmin) {
-                router.push("/users/home");
+                // Only redirect if there's a user and they're not an admin.
+                // If there's no user, let AuthContext handle it (which will redirect to /login).
+                const { isAuthenticated } = LocalStorageUtils.getToken() ? { isAuthenticated: true } : { isAuthenticated: false }; // Rough check
+
+                // Better yet, just check if we have a user in state via useRole
+                // Actually, if !isAdmin and loading is done, and user is null, it means unauthenticated.
+                // If user is NOT null and !isAdmin, then they are a regular user on an admin page.
+
+                if (user) {
+                    router.push("/users/home");
+                }
                 return;
             }
 
@@ -31,7 +41,7 @@ export default function AdminLayout({
                 LocalStorageUtils.setPreferredView("admin");
             }
         }
-    }, [isAdmin, loading, router]);
+    }, [isAdmin, loading, router, user]);
 
     if (loading) {
         return (
