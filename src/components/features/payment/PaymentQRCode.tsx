@@ -9,7 +9,7 @@ interface PaymentQRCodeProps {
 export default function PaymentQRCode({ upiString }: PaymentQRCodeProps) {
     return (
         <div className="bg-white p-4 rounded-xl inline-block mx-auto">
-            <QRCodeSVG value={upiString} size={200} />
+            <QRCodeSVG value={upiString} size={150} />
         </div>
     );
 }

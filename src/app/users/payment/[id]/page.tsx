@@ -7,7 +7,6 @@ import { OrdersApi } from "@/lib/api/orders";
 import { CheckCircle, IndianRupee, Loader2, ArrowLeft, Wallet, Copy } from "lucide-react";
 import Link from "next/link";
 import PaymentQRCode from "@/components/features/payment/PaymentQRCode";
-import UPICopy from "@/components/features/payment/UPICopy";
 import PaymentDeeplink from "@/components/features/payment/PaymentDeeplink";
 import PaymentConfirmation from "@/components/features/payment/PaymentConfirmation";
 import { formatNexaAmount } from "@/lib/utils/format";
@@ -25,6 +24,7 @@ export default function PaymentPage() {
     const [loading, setLoading] = useState(true);
     const [confirming, setConfirming] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [deeplinkTriggered, setDeeplinkTriggered] = useState(false);
 
     useEffect(() => {
         if (!id) return;
@@ -68,6 +68,16 @@ export default function PaymentPage() {
         }
     };
 
+    // Auto-trigger UPI deeplink when page loads
+    useEffect(() => {
+        if (upiString && !deeplinkTriggered && order && order.status === "ORDER_CREATED") {
+            // Auto-open UPI app
+            window.location.href = upiString;
+            setDeeplinkTriggered(true);
+            MixpanelUtils.track("UPI Deeplink Auto-Triggered", { orderId: id, upiString });
+        }
+    }, [upiString, deeplinkTriggered, order, id]);
+
     useEffect(() => {
         if (order && order.status !== "ORDER_CREATED") {
             router.replace(`/users/orders/${id}`);
@@ -90,27 +100,6 @@ export default function PaymentPage() {
             </button>
 
             <div className="bg-[#1a1b23] rounded-2xl p-6 shadow-xl border border-gray-800 space-y-6 text-center">
-                <div className="space-y-3">
-                    <div className="space-y-1">
-                        <p className="text-gray-400 text-sm uppercase tracking-wider">Total Payable</p>
-                        <div className="flex items-center justify-center gap-1 text-3xl font-bold text-green-500">
-                            <IndianRupee size={24} />
-                            {order.amountINR}
-                        </div>
-                    </div>
-
-                    {/* NEXA Amount Display */}
-                    <div className="bg-[#0f1016] rounded-lg p-2 border border-gray-800">
-                        <p className="text-gray-500 text-[10px] mb-0.5">You will receive</p>
-                        <div className="flex items-center justify-center gap-1">
-                            <span className="text-lg font-bold text-blue-600">
-                                {formatNexaAmount(order.nexaAmount)}
-                            </span>
-                            <span className="text-xs font-medium text-gray-400">NEXA</span>
-                        </div>
-                    </div>
-                </div>
-
                 {/* Destination Wallet */}
                 {order.nexaAddress && (
                     <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-3 space-y-2">
@@ -140,8 +129,23 @@ export default function PaymentPage() {
                 <PaymentQRCode upiString={upiString} />
                 <p className="text-xs text-gray-500">Scan using any UPI App (GPay, PhonePe, Paytm)</p>
 
-                {/* UPI Details */}
-                <UPICopy upiId={order.paymentQrId} />
+                <div className="space-y-3">
+                    <div className="flex items-center justify-center gap-1 text-3xl font-bold text-green-500">
+                        <IndianRupee size={24} />
+                        {order.amountINR}
+                    </div>
+
+                    {/* NEXA Amount Display */}
+                    <div className="bg-[#0f1016] rounded-lg p-2 border border-gray-800">
+                        <p className="text-gray-500 text-[10px] mb-0.5">You will receive</p>
+                        <div className="flex items-center justify-center gap-1">
+                            <span className="text-lg font-bold text-blue-600">
+                                {formatNexaAmount(order.nexaAmount)}
+                            </span>
+                            <span className="text-xs font-medium text-gray-400">NEXA</span>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Actions */}
                 <div className="space-y-3">

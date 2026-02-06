@@ -11,9 +11,9 @@ export default function PaymentDeeplink({ upiString }: PaymentDeeplinkProps) {
         <a
             href={upiString}
             onClick={() => MixpanelUtils.track("Pay via App Clicked", { upiString })}
-            className="block w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 rounded-xl transition-colors"
+            className="block w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 rounded-xl transition-colors text-center"
         >
-            Pay via App
+            Pay <span className="text-sm">(भुगतान करें)</span>
         </a>
     );
 }
