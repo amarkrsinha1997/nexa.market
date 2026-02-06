@@ -32,8 +32,9 @@ export async function GET(req: NextRequest) {
         const page = parseInt(searchParams.get("page") || "1");
         const limit = parseInt(searchParams.get("limit") || "10");
         const statusFilter = searchParams.get("status");
+        const adminView = searchParams.get("adminView") === "true";
 
-        const result = await OrdersService.getOrders(user, page, limit, statusFilter);
+        const result = await OrdersService.getOrders(user, page, limit, statusFilter, adminView);
 
         return NextResponse.json({ success: true, data: result });
 

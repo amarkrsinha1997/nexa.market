@@ -174,10 +174,8 @@ export default function ProfilePage() {
             <div className="px-4">
                 <button
                     onClick={() => {
-                        if (confirm("Are you sure you want to log out? This will clear all session data.")) {
-                            logout();
-                            MixpanelUtils.track(MixpanelEvents.USER_LOGOUT_CLICKED, { role: "User", source: "Profile Page" });
-                        }
+                        logout();
+                        MixpanelUtils.track(MixpanelEvents.USER_LOGOUT_CLICKED, { role: "User", source: "Profile Page" });
                     }}
                     className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-500 font-semibold py-3 rounded-xl border border-red-500/20 transition-all flex items-center justify-center gap-2"
                 >

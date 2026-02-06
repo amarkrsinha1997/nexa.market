@@ -36,14 +36,14 @@ export default function DesktopNavbar() {
             )}
 
             {/* Side Menu */}
-            <div className={`fixed top-0 left-0 h-full w-64 bg-[#1a1b23] text-white shadow-lg z-50 transform transition-transform duration-300 md:block hidden ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
+            <div className={`fixed top-0 left-0 h-full w-64 bg-[#1a1b23] text-white shadow-lg z-50 transform transition-transform duration-300 md:block hidden flex flex-col ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
                 <div className="p-4 border-b border-gray-800 flex justify-between items-center">
                     <span className="font-bold text-lg">Menu</span>
                     <button onClick={() => setIsOpen(false)}>
                         <X size={24} />
                     </button>
                 </div>
-                <div className="p-4 flex flex-col gap-4">
+                <div className="flex-1 p-4 flex flex-col gap-4">
                     <Link href="/users/home" className="flex items-center gap-3 p-2 hover:bg-gray-800 rounded" onClick={() => { setIsOpen(false); MixpanelUtils.track(MixpanelEvents.USER_HOME_MENU_CLICKED, { item: "Home", role: "User", device: "Desktop" }); }}>
                         <Home size={20} />
                         Home
@@ -56,8 +56,10 @@ export default function DesktopNavbar() {
                         <FileText size={20} />
                         Ledger
                     </Link>
+                </div>
 
-                    <button onClick={() => { logout(); MixpanelUtils.track(MixpanelEvents.USER_LOGOUT_CLICKED, { role: "User" }); }} className="flex items-center gap-3 p-2 hover:bg-red-900/20 text-red-500 rounded mt-auto">
+                <div className="p-4 border-t border-gray-800">
+                    <button onClick={() => { logout(); MixpanelUtils.track(MixpanelEvents.USER_LOGOUT_CLICKED, { role: "User" }); }} className="w-full flex items-center gap-3 p-2 hover:bg-red-900/20 text-red-500 rounded">
                         <LogOut size={20} />
                         Logout
                     </button>

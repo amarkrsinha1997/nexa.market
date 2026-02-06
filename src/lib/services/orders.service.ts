@@ -101,13 +101,15 @@ export class OrdersService {
     /**
      * Fetch orders with pagination and filtering
      */
-    static async getOrders(currentUser: User, page: number = 1, limit: number = 10, statusFilter?: string | null) {
+    static async getOrders(currentUser: User, page: number = 1, limit: number = 10, statusFilter?: string | null, adminView: boolean = false) {
         const isAdmin = currentUser.role === "ADMIN" || currentUser.role === "SUPERADMIN";
         const skip = (page - 1) * limit;
 
-        let whereClause: any = isAdmin ? {} : { userId: currentUser.id };
+        // Secure access control: only allow admins to see other users' data if adminView is explicitly true
+        const showAllOrders = isAdmin && adminView;
+        let whereClause: any = showAllOrders ? {} : { userId: currentUser.id };
 
-        if (isAdmin && statusFilter) {
+        if (showAllOrders && statusFilter) {
             if (statusFilter === "pending") {
                 whereClause.status = { in: ["VERIFICATION_PENDING", "VERIFYING"] };
             } else if (statusFilter === "released") {

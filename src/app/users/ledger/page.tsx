@@ -58,8 +58,11 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
 
             // Build URL with status parameter for admins
             let url = `/orders?page=${pageNum}&limit=10`;
-            if (adminView && filter !== "all") {
-                url += `&status=${filter}`;
+            if (adminView) {
+                url += `&adminView=true`;
+                if (filter !== "all") {
+                    url += `&status=${filter}`;
+                }
             }
 
             const res = await apiClient.get<{ orders: Order[], hasMore: boolean }>(url);
