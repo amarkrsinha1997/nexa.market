@@ -22,11 +22,6 @@ export default function UserHomePage() {
 
     return (
         <div className="max-w-md mx-auto space-y-6 pt-8 px-4">
-            <header className="space-y-1">
-                <h1 className="text-2xl font-bold text-white">Exchange</h1>
-                <p className="text-gray-400 text-sm">Buy Nexa instantly</p>
-            </header>
-
             <ExchangeForm />
 
             {isAdmin && (
