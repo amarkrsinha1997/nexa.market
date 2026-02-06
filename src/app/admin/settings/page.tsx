@@ -27,8 +27,9 @@ export default function AdminSettingsPage() {
                 const res = await ConfigApi.getConfig();
                 if (res.success && res.data?.price) {
                     // price is per Nexa, convert to per Crore
-                    const pricePerCroreValue = res.data.price * 10000000;
-                    setPricePerCrore(pricePerCroreValue.toString());
+                    // Round to 2 decimal places to avoid floating-point precision issues
+                    const pricePerCroreValue = Math.round(res.data.price * 10000000 * 100) / 100;
+                    setPricePerCrore(pricePerCroreValue.toFixed(2));
                 }
             } catch (error) {
                 console.error("Failed to fetch current price", error);
@@ -48,7 +49,9 @@ export default function AdminSettingsPage() {
         if (!pricePerCrore) return;
         setLoading(true);
         try {
-            await ConfigApi.updateConfig(parseFloat(pricePerCrore));
+            // Round to 2 decimal places before sending to ensure INR precision
+            const roundedPrice = Math.round(parseFloat(pricePerCrore) * 100) / 100;
+            await ConfigApi.updateConfig(roundedPrice);
             alert("Price updated successfully!");
         } catch (error) {
             console.error("Failed to update price", error);
@@ -73,9 +76,10 @@ export default function AdminSettingsPage() {
                             <label className="block text-sm font-medium text-gray-300 mb-2">Price per Crore (INR)</label>
                             <input
                                 type="number"
+                                step="0.01"
                                 value={pricePerCrore}
                                 onChange={(e) => setPricePerCrore(e.target.value)}
-                                placeholder="e.g. 50000"
+                                placeholder="e.g. 700.00"
                                 className="w-full bg-[#1a1b23] border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
                             />
                         </div>

@@ -38,14 +38,18 @@ export class ConfigService {
      * @param pricePerCrore Price in INR for 1 Crore (10,000,000) NEXA
      */
     static async setNexaPrice(pricePerCrore: number): Promise<void> {
-        const pricePerOneNexa = pricePerCrore / 10000000;
+        // Round pricePerCrore to 2 decimal places (INR precision)
+        const roundedPricePerCrore = Math.round(pricePerCrore * 100) / 100;
+        const pricePerOneNexa = roundedPricePerCrore / 10000000;
+        // Use toFixed(8) to avoid floating-point precision issues while maintaining accuracy
+        const pricePerNexaString = pricePerOneNexa.toFixed(8);
 
         await prisma.appConfig.upsert({
             where: { key: "NEXA_PRICE_INR" },
-            update: { value: pricePerOneNexa.toString() },
+            update: { value: pricePerNexaString },
             create: {
                 key: "NEXA_PRICE_INR",
-                value: pricePerOneNexa.toString(),
+                value: pricePerNexaString,
                 description: "Price of 1 NEXA token in INR"
             }
         });
