@@ -11,6 +11,7 @@ import LedgerList from "@/components/features/ledger/LedgerList";
 import { Order } from "@/types/order";
 
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
+import { useToast } from "@/lib/hooks/useToast";
 
 type FilterType = "all" | "confirmed" | "verified" | "pending" | "released" | "rejected" | "transfer_failed";
 
@@ -23,6 +24,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
     const [filter, setFilter] = useState<FilterType>(tabParam || (adminView ? "pending" : "all"));
 
     const { user, loading: authLoading } = useAuth();
+    const { toast } = useToast();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
@@ -109,7 +111,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
             }
         } catch (error) {
             console.error("Failed to check order", error);
-            alert("Failed to lock order. It might be locked by someone else.");
+            toast.error("Failed to lock order. It might be locked by someone else.");
         }
     };
 
@@ -126,7 +128,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
             }
         } catch (error) {
             console.error("Failed to submit decision", error);
-            alert("Failed to submit decision.");
+            toast.error("Failed to submit decision");
         } finally {
             // Always refetch to ensure UI consistency (e.g. failure reason, lifecycle updates)
             await fetchOrders(1);
@@ -138,13 +140,13 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
             const res = await apiClient.post(`/admin/orders/${orderId}/reprocess-payment`, {});
             if (res.success) {
                 MixpanelUtils.track("Admin Order Reprocessed", { orderId });
-                alert("Payment retry initiated successfully.");
+                toast.success("Payment retry initiated successfully");
             } else {
-                alert(`Failed: ${res.message}`);
+                toast.error(`Failed: ${res.message}`);
             }
         } catch (error) {
             console.error("Reprocess failed", error);
-            alert("Reprocess failed. Check console.");
+            toast.error("Reprocess failed. Check console");
         } finally {
             // Always refetch to reflect latest failure reason or status
             await fetchOrders(1);

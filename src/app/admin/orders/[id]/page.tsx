@@ -11,10 +11,12 @@ import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { format } from "date-fns";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
+import { useToast } from "@/lib/hooks/useToast";
 
 export default function AdminOrderPage({ params }: { params: Promise<{ id: string }> }) {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
+    const { toast } = useToast();
     const [order, setOrder] = useState<Order | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -66,10 +68,10 @@ export default function AdminOrderPage({ params }: { params: Promise<{ id: strin
             if (res.success) {
                 await fetchOrder();
             } else {
-                alert(res.message || "Action failed");
+                toast.error(res.message || "Action failed");
             }
         } catch (err: any) {
-            alert(err.message || "Action failed");
+            toast.error(err.message || "Action failed");
         } finally {
             setProcessing(false);
         }

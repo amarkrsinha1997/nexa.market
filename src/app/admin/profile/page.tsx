@@ -6,9 +6,11 @@ import PhoneInput from "@/components/ui/PhoneInput";
 import NexaAddressInput from "@/components/ui/NexaAddressInput";
 import { apiClient } from "@/lib/api/client";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
+import { useToast } from "@/lib/hooks/useToast";
 
 export default function AdminProfilePage() {
     const { user, isSuperAdmin } = useRole();
+    const { toast } = useToast();
 
     // State for editable fields
     const [phoneCountry, setPhoneCountry] = useState("+91");
@@ -41,13 +43,13 @@ export default function AdminProfilePage() {
             const fullPhoneNumber = `${phoneCountry} ${phoneNumber}`;
             const res = await apiClient.patch("/user/profile", { phoneNumber: fullPhoneNumber });
             if (res.success) {
-                alert("Phone number updated successfully");
+                toast.success("Phone number updated successfully");
             } else {
-                alert("Failed to update phone number");
+                toast.error("Failed to update phone number");
             }
         } catch (error) {
             console.error(error);
-            alert("An error occurred");
+            toast.error("An error occurred");
         } finally {
             setSavingPhone(false);
         }
@@ -59,13 +61,13 @@ export default function AdminProfilePage() {
         try {
             const res = await apiClient.patch("/user/profile", { nexaWalletAddress: walletAddress });
             if (res.success) {
-                alert("Wallet address updated successfully");
+                toast.success("Wallet address updated successfully");
             } else {
-                alert("Failed to update wallet address");
+                toast.error("Failed to update wallet address");
             }
         } catch (error) {
             console.error(error);
-            alert("An error occurred");
+            toast.error("An error occurred");
         } finally {
             setSavingWallet(false);
         }

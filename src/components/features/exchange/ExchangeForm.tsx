@@ -11,6 +11,7 @@ import { formatNexaAmount } from "@/lib/utils/format";
 import { useAuth } from "@/lib/hooks/useAuth";
 import NexaAddressInput from "@/components/ui/NexaAddressInput";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
+import { useToast } from "@/lib/hooks/useToast";
 
 interface ExchangeFormProps { }
 
@@ -25,6 +26,7 @@ export default function ExchangeForm(props: ExchangeFormProps) {
 
     const { user, refetch } = useAuth();
     const nexaPrice = useNexaPrice(); // Use the hook for automatic price updates
+    const { toast } = useToast();
 
     // Load initial wallet from user profile
     useEffect(() => {
@@ -55,7 +57,7 @@ export default function ExchangeForm(props: ExchangeFormProps) {
             }
         } catch (error) {
             console.error("Order failed", error);
-            alert("Failed to create order");
+            toast.error("Failed to create order");
         } finally {
             setCreatingOrder(false);
         }
@@ -70,14 +72,27 @@ export default function ExchangeForm(props: ExchangeFormProps) {
                     <div className="flex-1">
                         <input
                             type="number"
+                            min="1"
+                            step="1"
                             value={amount}
                             onChange={(e) => {
-                                setAmount(e.target.value);
-                                if (e.target.value) {
-                                    MixpanelUtils.track("Exchange Amount Entered", { amount: e.target.value });
+                                const value = e.target.value;
+                                // Only allow whole numbers (no decimals)
+                                if (value === '' || /^\d+$/.test(value)) {
+                                    setAmount(value);
+                                    if (value) {
+                                        MixpanelUtils.track("Exchange Amount Entered", { amount: value });
+                                    }
                                 }
                             }}
-                            placeholder="0.00"
+                            onBlur={(e) => {
+                                // Round to whole number if somehow a decimal got in
+                                if (e.target.value && !isNaN(parseFloat(e.target.value))) {
+                                    const rounded = Math.round(parseFloat(e.target.value));
+                                    setAmount(rounded > 0 ? rounded.toString() : '');
+                                }
+                            }}
+                            placeholder="0"
                             className="bg-transparent text-2xl font-bold text-white outline-none w-full placeholder-gray-600"
                         />
                     </div>
@@ -208,7 +223,7 @@ export default function ExchangeForm(props: ExchangeFormProps) {
             {/* Pay Button */}
             <button
                 onClick={() => { handleBuyNexa(); MixpanelUtils.track("Buy Nexa Clicked", { amount, estimatedNexa }); }}
-                disabled={!amount || parseFloat(amount) <= 0 || creatingOrder || !nexaAddress || !isWalletValid}
+                disabled={!amount || parseFloat(amount) < 1 || creatingOrder || !nexaAddress || !isWalletValid}
                 className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
             >
                 {creatingOrder ? <Loader2 className="animate-spin" /> : <><Wallet size={20} /> {nexaAddress ? "Buy Nexa" : "Add Wallet to Buy"}</>}

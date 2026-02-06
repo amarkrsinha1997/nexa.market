@@ -6,6 +6,8 @@ import GoogleAuthProviderWrapper from "@/providers/GoogleAuthProviderWrapper";
 import { AuthProvider } from "@/lib/contexts/AuthContext";
 import PriceSchedulerInitializer from "@/components/providers/PriceSchedulerInitializer";
 import MixpanelProvider from "@/components/providers/MixpanelProvider";
+import { ToastProvider } from "@/lib/hooks/useToast";
+import Toaster from "@/components/ui/Toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,9 +27,12 @@ export default function RootLayout({
         <GoogleAuthProviderWrapper>
           <Suspense fallback={null}>
             <AuthProvider>
-              <PriceSchedulerInitializer />
-              <MixpanelProvider />
-              {children}
+              <ToastProvider>
+                <PriceSchedulerInitializer />
+                <MixpanelProvider />
+                <Toaster />
+                {children}
+              </ToastProvider>
             </AuthProvider>
           </Suspense>
         </GoogleAuthProviderWrapper>

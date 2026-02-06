@@ -41,6 +41,7 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision, o
             {orders.map((order) => {
                 const isLockedByMe = order.checkedBy === currentUser?.id;
                 const isLockedByOthers = order.checkedBy && order.checkedBy !== currentUser?.id;
+                const isMyOwnOrder = order.userId === currentUser?.id;
                 const isExpanded = expandedOrderId === order.id;
                 const hasLifecycle = order.lifecycle && order.lifecycle.length > 0;
 
@@ -164,7 +165,7 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision, o
                         {isAdminView && (
                             <div className="pt-3 border-t border-gray-800 space-y-2">
                                 {/* Check Button */}
-                                {order.status === "VERIFICATION_PENDING" && (!isLockedByOthers || isSuperAdmin) && !isLockedByMe && (
+                                {order.status === "VERIFICATION_PENDING" && (!isLockedByOthers || isSuperAdmin) && !isLockedByMe && !isMyOwnOrder && (
                                     <button
                                         onClick={(e) => { e.stopPropagation(); onCheck?.(order.id); }}
                                         className="w-full flex items-center justify-center gap-2 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 px-4 py-2 rounded-lg transition-colors relative"
@@ -178,7 +179,7 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision, o
                                 )}
 
                                 {/* Approve/Reject Buttons */}
-                                {(order.status === "VERIFYING" || order.status === "VERIFICATION_PENDING") && (isLockedByMe || (isSuperAdmin && isLockedByOthers)) && (
+                                {(order.status === "VERIFYING" || order.status === "VERIFICATION_PENDING") && (isLockedByMe || (isSuperAdmin && isLockedByOthers)) && !isMyOwnOrder && (
                                     <div className="flex gap-2">
                                         <button
                                             onClick={(e) => { e.stopPropagation(); onDecision?.(order.id, 'APPROVE'); }}
@@ -208,6 +209,14 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision, o
                                     <div className="flex items-center justify-center gap-2 text-sm text-yellow-500 bg-yellow-500/10 px-4 py-2 rounded-lg">
                                         <Lock size={14} />
                                         Checking by another admin...
+                                    </div>
+                                )}
+
+                                {/* Own Order - Cannot Self-Approve */}
+                                {isMyOwnOrder && (order.status === "VERIFICATION_PENDING" || order.status === "VERIFYING") && (
+                                    <div className="flex items-center justify-center gap-2 text-sm text-blue-400 bg-blue-500/10 px-4 py-2 rounded-lg border border-blue-500/20">
+                                        <ShieldCheck size={14} />
+                                        Your order - another admin must verify
                                     </div>
                                 )}
 

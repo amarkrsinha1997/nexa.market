@@ -7,10 +7,12 @@ import { ArrowLeft, Monitor, Save, ChevronDown, ChevronUp, LogOut } from "lucide
 import { ConfigApi } from "@/lib/api/config";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
+import { useToast } from "@/lib/hooks/useToast";
 
 export default function AdminSettingsPage() {
     const router = useRouter();
     const { logout } = useAuth();
+    const { toast } = useToast();
     const [pricePerCrore, setPricePerCrore] = useState<string>("");
     const [calculating, setCalculating] = useState(false);
     const [priceAccordionOpen, setPriceAccordionOpen] = useState(true);
@@ -52,10 +54,10 @@ export default function AdminSettingsPage() {
             // Round to 2 decimal places before sending to ensure INR precision
             const roundedPrice = Math.round(parseFloat(pricePerCrore) * 100) / 100;
             await ConfigApi.updateConfig(roundedPrice);
-            alert("Price updated successfully!");
+            toast.success("Price updated successfully!");
         } catch (error) {
             console.error("Failed to update price", error);
-            alert("Failed to update price.");
+            toast.error("Failed to update price");
         } finally {
             setLoading(false);
         }
@@ -78,7 +80,20 @@ export default function AdminSettingsPage() {
                                 type="number"
                                 step="0.01"
                                 value={pricePerCrore}
-                                onChange={(e) => setPricePerCrore(e.target.value)}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    // Allow empty or valid numbers with max 2 decimal places
+                                    if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                                        setPricePerCrore(value);
+                                    }
+                                }}
+                                onBlur={(e) => {
+                                    // Format to 2 decimal places on blur
+                                    if (e.target.value && !isNaN(parseFloat(e.target.value))) {
+                                        const formatted = parseFloat(e.target.value).toFixed(2);
+                                        setPricePerCrore(formatted);
+                                    }
+                                }}
                                 placeholder="e.g. 700.00"
                                 className="w-full bg-[#1a1b23] border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
                             />

@@ -12,11 +12,13 @@ import PaymentDeeplink from "@/components/features/payment/PaymentDeeplink";
 import PaymentConfirmation from "@/components/features/payment/PaymentConfirmation";
 import { formatNexaAmount } from "@/lib/utils/format";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
+import { useToast } from "@/lib/hooks/useToast";
 
 export default function PaymentPage() {
     const { id } = useParams();
     const router = useRouter();
     const { loading: authLoading } = useAuth();
+    const { toast } = useToast();
 
     const [order, setOrder] = useState<any>(null);
     const [upiString, setUpiString] = useState<string>("");
@@ -60,7 +62,7 @@ export default function PaymentPage() {
                 }
             }
         } catch (err: any) {
-            alert("Failed to confirm: " + err.message);
+            toast.error("Failed to confirm: " + err.message);
         } finally {
             setConfirming(false);
         }
