@@ -10,6 +10,7 @@ import { useState } from "react";
 import LifecycleViewer from "./LifecycleViewer";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
 import { MixpanelEvents } from "@/lib/config/mixpanel-events";
+import { useToast } from "@/lib/hooks/useToast";
 
 interface LedgerListProps {
     orders: Order[];
@@ -24,6 +25,7 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision, o
     const isSuperAdmin = currentUser?.role === 'SUPERADMIN';
     const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
     const [processingId, setProcessingId] = useState<string | null>(null);
+    const { toast } = useToast();
 
     const handleReprocess = async (e: React.MouseEvent, orderId: string) => {
         e.stopPropagation();
@@ -152,6 +154,7 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision, o
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             navigator.clipboard.writeText(order.nexaAddress!);
+                                            toast.success("Address copied");
                                             MixpanelUtils.track(MixpanelEvents.LEDGER_DESTINATION_ADDRESS_COPIED, { source: "Ledger List", orderId: order.id });
                                         }}
                                         className="p-1 px-2 bg-gray-800 hover:bg-gray-700 rounded text-[10px] text-gray-400 transition-colors"

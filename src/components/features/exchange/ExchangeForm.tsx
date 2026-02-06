@@ -205,6 +205,7 @@ export default function ExchangeForm(props: ExchangeFormProps) {
                                         <button
                                             onClick={() => {
                                                 navigator.clipboard.writeText(nexaAddress);
+                                                toast.success("Address copied");
                                                 MixpanelUtils.track(MixpanelEvents.EXCHANGE_FORM_WALLET_ADDRESS_COPIED);
                                             }}
                                             className="text-gray-500 hover:text-white shrink-0"

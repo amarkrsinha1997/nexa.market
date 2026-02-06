@@ -115,6 +115,7 @@ export default function PaymentPage() {
                             <button
                                 onClick={() => {
                                     navigator.clipboard.writeText(order.nexaAddress!);
+                                    toast.success("Address copied");
                                     MixpanelUtils.track(MixpanelEvents.PAYMENT_PAGE_DESTINATION_ADDRESS_COPIED, { source: "Payment Page", orderId: id });
                                 }}
                                 className="shrink-0 p-1.5 hover:bg-blue-500/10 text-gray-500 hover:text-blue-400 rounded transition-colors"

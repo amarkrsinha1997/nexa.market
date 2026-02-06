@@ -11,11 +11,13 @@ import { format } from "date-fns";
 import { formatNexaAmount } from "@/lib/utils/format";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
 import { MixpanelEvents } from "@/lib/config/mixpanel-events";
+import { useToast } from "@/lib/hooks/useToast";
 
 export default function OrderDetailsPage() {
     const { id } = useParams();
     const router = useRouter();
     const { loading: authLoading } = useAuth();
+    const { toast } = useToast();
 
     const [order, setOrder] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -122,6 +124,7 @@ export default function OrderDetailsPage() {
                                 <button
                                     onClick={() => {
                                         navigator.clipboard.writeText(order.nexaAddress!);
+                                        toast.success("Address copied");
                                         MixpanelUtils.track(MixpanelEvents.PAYMENT_PAGE_DESTINATION_ADDRESS_COPIED, { source: "Order Details", orderId: id });
                                     }}
                                     className="p-1 px-2 bg-gray-800 hover:bg-gray-700 rounded text-[10px] text-gray-400 shrink-0"

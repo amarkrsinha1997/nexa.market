@@ -8,6 +8,7 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import { Check, ThumbsUp, ThumbsDown, Lock, ChevronDown, ChevronUp, ShieldCheck, AlertTriangle, RefreshCw, Zap } from "lucide-react";
 import { useState, Fragment } from "react";
 import LifecycleViewer from "./LifecycleViewer";
+import { useToast } from "@/lib/hooks/useToast";
 
 interface LedgerTableProps {
     orders: Order[];
@@ -22,6 +23,7 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision, 
     const isSuperAdmin = currentUser?.role === 'SUPERADMIN';
     const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
     const [processingId, setProcessingId] = useState<string | null>(null);
+    const { toast } = useToast();
 
     const handleReprocess = async (e: React.MouseEvent, orderId: string) => {
         e.stopPropagation();
@@ -130,6 +132,7 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision, 
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         navigator.clipboard.writeText(order.nexaAddress!);
+                                                        toast.success("Address copied");
                                                     }}
                                                     className="opacity-0 group-hover:opacity-100 p-1 bg-gray-700 hover:bg-gray-600 rounded transition-opacity"
                                                     title="Copy Address"

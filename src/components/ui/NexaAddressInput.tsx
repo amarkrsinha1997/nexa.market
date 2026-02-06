@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Wallet, Clipboard, Copy, AlertCircle, Check } from "lucide-react";
 import { Address } from "libnexa-ts";
+import { useToast } from "@/lib/hooks/useToast";
 
 interface NexaAddressInputProps {
     value: string;
@@ -21,6 +22,7 @@ export default function NexaAddressInput({
 }: NexaAddressInputProps) {
     const [isValid, setIsValid] = useState(true);
     const [copied, setCopied] = useState(false);
+    const { toast } = useToast();
 
     // Validate on load if value exists
     useEffect(() => {
@@ -53,8 +55,10 @@ export default function NexaAddressInput({
         try {
             const text = await navigator.clipboard.readText();
             handleChange(text);
+            toast.success("Address pasted from clipboard");
         } catch (err) {
             console.error('Failed to read clipboard', err);
+            toast.error("Failed to paste from clipboard");
         }
     };
 
@@ -63,9 +67,11 @@ export default function NexaAddressInput({
         try {
             await navigator.clipboard.writeText(value);
             setCopied(true);
+            toast.success("Address copied");
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
             console.error('Failed to copy', err);
+            toast.error("Failed to copy address");
         }
     };
 
