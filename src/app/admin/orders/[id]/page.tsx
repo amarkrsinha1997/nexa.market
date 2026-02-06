@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
 import { MixpanelEvents } from "@/lib/config/mixpanel-events";
 import { useToast } from "@/lib/hooks/useToast";
+import OrderDetailsSkeleton from "@/components/skeletons/OrderDetailsSkeleton";
 
 export default function AdminOrderPage({ params }: { params: Promise<{ id: string }> }) {
     const { user, loading: authLoading } = useAuth();
@@ -78,11 +79,7 @@ export default function AdminOrderPage({ params }: { params: Promise<{ id: strin
         }
     };
 
-    if (authLoading || loading) return (
-        <div className="flex h-screen items-center justify-center bg-[#0f1016] text-gray-500">
-            <Loader2 className=" animate-spin mr-2" /> Loading...
-        </div>
-    );
+    if (authLoading || loading) return <OrderDetailsSkeleton />;
 
     if (error || !order) return (
         <div className="flex bg-[#0f1016] min-h-screen flex-col items-center justify-center text-white space-y-4">

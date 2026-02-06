@@ -113,7 +113,7 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision, 
                                                 <div className="flex flex-col flex-1 min-w-0">
                                                     <div className="flex items-center justify-between gap-2">
                                                         <span className="text-white font-medium truncate">{order.user?.name || "Unknown"}</span>
-                                                        {order.user?.phoneNumber && (
+                                                        {isAdminView && order.user?.phoneNumber && (
                                                             <div className="flex items-center gap-2 shrink-0">
                                                                 <a
                                                                     href={`tel:${order.user.phoneNumber.replace(/\s+/g, '')}`}
@@ -272,20 +272,22 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision, 
                                     )}
                                 </tr>
                                 {/* Expandable lifecycle row */}
-                                {isAdminView && isExpanded && (
-                                    <tr key={`${order.id}-lifecycle`} className="bg-[#0a0b0f]">
-                                        <td colSpan={11} className="px-6 py-0">
-                                            <div className="p-4 bg-black/20 rounded-b-xl border-x border-b border-gray-800/30">
-                                                <LifecycleViewer lifecycle={order.lifecycle} orderUserId={order.userId} />
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )}
+                                {
+                                    isAdminView && isExpanded && (
+                                        <tr key={`${order.id}-lifecycle`} className="bg-[#0a0b0f]">
+                                            <td colSpan={11} className="px-6 py-0">
+                                                <div className="p-4 bg-black/20 rounded-b-xl border-x border-b border-gray-800/30">
+                                                    <LifecycleViewer lifecycle={order.lifecycle} orderUserId={order.userId} />
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )
+                                }
                             </Fragment>
                         );
                     })}
                 </tbody>
             </table>
-        </div>
+        </div >
     );
 }

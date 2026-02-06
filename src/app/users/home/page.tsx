@@ -8,6 +8,7 @@ import Link from "next/link";
 import { LocalStorageUtils } from "@/lib/utils/storage";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
 import { MixpanelEvents } from "@/lib/config/mixpanel-events";
+import ExchangeFormSkeleton from "@/components/skeletons/ExchangeFormSkeleton";
 
 export default function UserHomePage() {
     const { user, loading } = useAuth();
@@ -18,7 +19,7 @@ export default function UserHomePage() {
         MixpanelUtils.track(MixpanelEvents.USER_TO_ADMIN_PORTAL_CLICKED, { source: "User Home" });
     };
 
-    if (loading) return <div className="p-10 text-center text-gray-500">Loading...</div>;
+    if (loading) return <ExchangeFormSkeleton />;
 
     return (
         <div className="max-w-md mx-auto space-y-6 pt-8 px-4">

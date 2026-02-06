@@ -7,6 +7,7 @@ import { FileText, Coins, Filter, AlertTriangle, Loader2 } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import LedgerTable from "@/components/features/ledger/LedgerTable";
 import LedgerList from "@/components/features/ledger/LedgerList";
+import LedgerSkeleton from "@/components/skeletons/LedgerSkeleton";
 // import PendingPaymentsTable from "@/components/admin/PendingPaymentsTable"; // Removed: Unified view
 import { Order } from "@/types/order";
 
@@ -166,9 +167,11 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
     const isRefreshing = loading && orders.length > 0;
 
     if (authLoading || (loading && orders.length === 0)) return (
-        <div className="flex flex-col items-center justify-center min-h-[50vh] text-gray-500 space-y-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-            <p>Loading ledger...</p>
+        <div className="max-w-7xl mx-auto space-y-4 pt-4 pb-12">
+            <header className="px-4 md:px-0 space-y-4">
+                <h1 className="text-2xl font-bold text-white">Ledger</h1>
+            </header>
+            <LedgerSkeleton />
         </div>
     );
 

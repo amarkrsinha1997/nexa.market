@@ -8,6 +8,7 @@ import { apiClient } from "@/lib/api/client";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
 import { MixpanelEvents } from "@/lib/config/mixpanel-events";
 import { useToast } from "@/lib/hooks/useToast";
+import ProfileSkeleton from "@/components/skeletons/ProfileSkeleton";
 
 export default function AdminProfilePage() {
     const { user, isSuperAdmin } = useRole();
@@ -73,6 +74,8 @@ export default function AdminProfilePage() {
             setSavingWallet(false);
         }
     };
+
+    if (!user) return <ProfileSkeleton />;
 
     return (
         <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-4">

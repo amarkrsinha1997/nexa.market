@@ -11,6 +11,7 @@ import { Save, User as UserIcon, Calendar, Mail, Wallet, ChevronRight, LogOut } 
 import { format } from "date-fns";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
 import { MixpanelEvents } from "@/lib/config/mixpanel-events";
+import ProfileSkeleton from "@/components/skeletons/ProfileSkeleton";
 
 export default function ProfilePage() {
     const { user, loading, refetch, logout } = useAuth();
@@ -70,7 +71,7 @@ export default function ProfilePage() {
         }
     };
 
-    if (loading) return <div className="p-10 text-center text-gray-500">Loading...</div>;
+    if (loading) return <ProfileSkeleton />;
     if (!user) return null;
 
     return (

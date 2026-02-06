@@ -88,7 +88,7 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision, o
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between gap-2">
                                         <div className="text-sm font-medium text-white truncate">{order.user.name || "Unknown User"}</div>
-                                        {order.user.phoneNumber && (
+                                        {isAdminView && order.user.phoneNumber && (
                                             <div className="flex items-center gap-3 shrink-0">
                                                 <a
                                                     href={`tel:${order.user.phoneNumber.replace(/\s+/g, '')}`}
