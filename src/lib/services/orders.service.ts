@@ -60,7 +60,7 @@ export class OrdersService {
             data: {
                 userId: user.id,
                 amountINR,
-                nexaAmount: parseFloat(nexaAmount.toFixed(2)),
+                nexaAmount: Math.round(nexaAmount),
                 nexaPrice,
                 paymentQrId: selectedUPI.vpa,
                 nexaAddress: user.nexaWalletAddress,
@@ -287,7 +287,7 @@ export class OrdersService {
                         try {
                             const paymentResult = await blockchainService.processFundTransfer(
                                 order.user.nexaWalletAddress,
-                                order.nexaAmount.toFixed(2),
+                                String(Math.round(order.nexaAmount)),
                                 order.user.id
                             );
                             if (paymentResult.success) {
@@ -439,7 +439,7 @@ export class OrdersService {
                     try {
                         const paymentResult = await blockchainService.processFundTransfer(
                             order.user.nexaWalletAddress,
-                            order.nexaAmount.toFixed(2),
+                            String(Math.round(order.nexaAmount)),
                             order.user.id
                         );
                         if (paymentResult.success) {

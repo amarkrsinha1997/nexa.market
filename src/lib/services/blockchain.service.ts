@@ -241,7 +241,7 @@ export class BlockchainService {
             const tx = await this.fundWallet
                 .newTransaction(account)
                 .onNetwork(nexaConfig.network)
-                .sendTo(toAddress, String(Number(amount) * 100))
+                .sendTo(toAddress, String(Math.round(Number(amount) * 100)))
                 .populate()
                 .sign()
                 .build();
