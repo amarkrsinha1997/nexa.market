@@ -71,7 +71,12 @@ export default function ExchangeForm(props: ExchangeFormProps) {
                         <input
                             type="number"
                             value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
+                            onChange={(e) => {
+                                setAmount(e.target.value);
+                                if (e.target.value) {
+                                    MixpanelUtils.track("Exchange Amount Entered", { amount: e.target.value });
+                                }
+                            }}
                             placeholder="0.00"
                             className="bg-transparent text-2xl font-bold text-white outline-none w-full placeholder-gray-600"
                         />
@@ -130,6 +135,7 @@ export default function ExchangeForm(props: ExchangeFormProps) {
                         onClick={async () => {
                             if (!isEditingWallet) {
                                 setIsEditingWallet(true);
+                                MixpanelUtils.track("Exchange Wallet Edit Clicked");
                                 return;
                             }
 
@@ -181,7 +187,10 @@ export default function ExchangeForm(props: ExchangeFormProps) {
                                             {nexaAddress}
                                         </p>
                                         <button
-                                            onClick={() => navigator.clipboard.writeText(nexaAddress)}
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(nexaAddress);
+                                                MixpanelUtils.track("Exchange Wallet Address Copied");
+                                            }}
                                             className="text-gray-500 hover:text-white shrink-0"
                                         >
                                             <Copy size={12} />

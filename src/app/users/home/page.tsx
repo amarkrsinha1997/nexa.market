@@ -6,6 +6,7 @@ import ExchangeForm from "@/components/features/exchange/ExchangeForm";
 import { Shield } from "lucide-react";
 import Link from "next/link";
 import { LocalStorageUtils } from "@/lib/utils/storage";
+import { MixpanelUtils } from "@/lib/utils/mixpanel";
 
 export default function UserHomePage() {
     const { user, loading } = useAuth();
@@ -13,6 +14,7 @@ export default function UserHomePage() {
 
     const handleAdminSwitch = () => {
         LocalStorageUtils.setPreferredView("admin");
+        MixpanelUtils.track("Switch to Admin Portal Clicked", { source: "User Home" });
     };
 
     if (loading) return <div className="p-10 text-center text-gray-500">Loading...</div>;

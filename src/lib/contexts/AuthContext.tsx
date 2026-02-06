@@ -135,9 +135,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = () => {
         AuthApi.logout();
-        setUser(null);
-        // Full page reload to clear all in-memory state and ensure cache is cleared
+        // Navigate immediately to prevent any re-renders or race conditions
         window.location.href = "/login";
+        // Note: setUser(null) is not needed as the page will reload
     };
 
     const refresh = async () => {
