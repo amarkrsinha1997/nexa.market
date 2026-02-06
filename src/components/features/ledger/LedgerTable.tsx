@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { formatNexaAmount } from "@/lib/utils/format";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { Check, ThumbsUp, ThumbsDown, Lock, ChevronDown, ChevronUp, ShieldCheck, AlertTriangle, RefreshCw, Zap } from "lucide-react";
+import { FaPhone, FaWhatsapp } from "react-icons/fa";
 import { useState, Fragment } from "react";
 import LifecycleViewer from "./LifecycleViewer";
 import { useToast } from "@/lib/hooks/useToast";
@@ -109,11 +110,35 @@ export default function LedgerTable({ orders, currentUser, onCheck, onDecision, 
                                                         {order.user?.name?.[0] || "U"}
                                                     </div>
                                                 )}
-                                                <div className="flex flex-col">
-                                                    <span className="text-white font-medium">{order.user?.name || "Unknown"}</span>
-                                                    <span className="text-xs text-gray-500">{order.user?.email || "-"}</span>
+                                                <div className="flex flex-col flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span className="text-white font-medium truncate">{order.user?.name || "Unknown"}</span>
+                                                        {order.user?.phoneNumber && (
+                                                            <div className="flex items-center gap-2 shrink-0">
+                                                                <a
+                                                                    href={`tel:${order.user.phoneNumber.replace(/\s+/g, '')}`}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    className="text-blue-400 hover:text-blue-300 transition-colors"
+                                                                    title={`Call: ${order.user.phoneNumber}`}
+                                                                >
+                                                                    <FaPhone size={12} />
+                                                                </a>
+                                                                <a
+                                                                    href={`https://wa.me/${order.user.phoneNumber.replace(/\D/g, '')}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    className="text-green-500 hover:text-green-400 transition-colors"
+                                                                    title="Message on WhatsApp"
+                                                                >
+                                                                    <FaWhatsapp size={14} />
+                                                                </a>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-xs text-gray-500 truncate">{order.user?.email || "-"}</span>
                                                     {order.user?.phoneNumber && (
-                                                        <span className="text-xs text-blue-400 font-mono">{order.user.phoneNumber}</span>
+                                                        <span className="text-[10px] text-gray-600 font-mono mt-0.5">{order.user.phoneNumber}</span>
                                                     )}
                                                 </div>
                                             </div>

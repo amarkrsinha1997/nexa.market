@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { formatNexaAmount } from "@/lib/utils/format";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { Coins, Check, ThumbsUp, ThumbsDown, Lock, ChevronDown, ChevronUp, ShieldCheck, AlertTriangle, RefreshCw } from "lucide-react";
+import { FaPhone, FaWhatsapp } from "react-icons/fa";
 import { Order } from "@/types/order";
 import { User } from "@prisma/client";
 import { useState } from "react";
@@ -84,11 +85,35 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision, o
                                         {(order.user.name?.[0] || "U").toUpperCase()}
                                     </div>
                                 )}
-                                <div className="min-w-0">
-                                    <div className="text-sm font-medium text-white truncate">{order.user.name || "Unknown User"}</div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="text-sm font-medium text-white truncate">{order.user.name || "Unknown User"}</div>
+                                        {order.user.phoneNumber && (
+                                            <div className="flex items-center gap-3 shrink-0">
+                                                <a
+                                                    href={`tel:${order.user.phoneNumber.replace(/\s+/g, '')}`}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="text-blue-400 hover:text-blue-300 transition-colors"
+                                                    title={`Call: ${order.user.phoneNumber}`}
+                                                >
+                                                    <FaPhone size={24} />
+                                                </a>
+                                                <a
+                                                    href={`https://wa.me/${order.user.phoneNumber.replace(/\D/g, '')}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="text-green-500 hover:text-green-400 transition-colors"
+                                                    title="Message on WhatsApp"
+                                                >
+                                                    <FaWhatsapp size={28} />
+                                                </a>
+                                            </div>
+                                        )}
+                                    </div>
                                     <div className="text-xs text-gray-500 truncate">{order.user.email}</div>
                                     {order.user.phoneNumber && (
-                                        <div className="text-xs text-blue-400 mt-0.5">{order.user.phoneNumber}</div>
+                                        <div className="text-[10px] text-gray-600 font-mono mt-0.5">{order.user.phoneNumber}</div>
                                     )}
                                 </div>
                             </div>
