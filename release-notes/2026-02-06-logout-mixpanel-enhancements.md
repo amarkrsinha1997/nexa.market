@@ -30,6 +30,10 @@ Fixed admin logout redirection issue and ensured complete cache clearing. Verifi
   - Buy Nexa button (already had `Buy Nexa Clicked`)
 - **User Home**:
   - Admin portal switch link (`Switch to Admin Portal Clicked`)
+- **Landing Page**:
+  - Scroll depth engagement (`Landing Scrolled 50%`)
+  - Logo click tracking (`Landing Logo Clicked`)
+  - Button clicks (already had `Landing Sign In Clicked`, `Landing Buy Now Clicked`, `Landing View Markets Clicked`)
 
 ### Files Touched
 - [src/app/admin/layout.tsx](file:///Users/apple/Documents/Nekka/nexa.market/src/app/admin/layout.tsx)
