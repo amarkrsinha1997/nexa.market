@@ -6,6 +6,7 @@ import { Plus, Edit, Trash2, Power, PowerOff, Clock, Search, Zap, Filter } from 
 import UPIFormModal from "@/components/features/admin/UPIFormModal";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
 import { MixpanelEvents } from "@/lib/config/mixpanel-events";
+import UPISkeleton from "@/components/skeletons/UPISkeleton";
 
 interface UPI {
     id: string;
@@ -150,10 +151,7 @@ export default function UPIManagementPage() {
                 </div>
 
                 {loading ? (
-                    <div className="text-center py-20">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                        <p className="text-gray-500">Loading configurations...</p>
-                    </div>
+                    <UPISkeleton />
                 ) : filteredUpis.length === 0 ? (
                     <div className="text-center py-20 bg-[#15161c] rounded-2xl border border-gray-800/50">
                         <div className="bg-gray-800/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
