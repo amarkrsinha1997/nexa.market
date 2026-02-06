@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
+import { MixpanelEvents } from "@/lib/config/mixpanel-events";
 
 import { LocalStorageUtils } from "@/lib/utils/storage";
 
@@ -55,7 +56,7 @@ export default function MixpanelProvider() {
             const url = `${pathname}${searchParams && searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
             const pageName = getPageName(pathname);
 
-            MixpanelUtils.track("Page View", {
+            MixpanelUtils.track(MixpanelEvents.PAGE_VIEW(pageName), {
                 "Page Name": pageName,
                 path: pathname,
                 url: url

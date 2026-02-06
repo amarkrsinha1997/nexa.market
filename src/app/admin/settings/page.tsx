@@ -7,6 +7,7 @@ import { ArrowLeft, Monitor, Save, ChevronDown, ChevronUp, LogOut } from "lucide
 import { ConfigApi } from "@/lib/api/config";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
+import { MixpanelEvents } from "@/lib/config/mixpanel-events";
 import { useToast } from "@/lib/hooks/useToast";
 
 export default function AdminSettingsPage() {
@@ -105,7 +106,7 @@ export default function AdminSettingsPage() {
                         </div>
 
                         <button
-                            onClick={() => { handleSavePrice(); MixpanelUtils.track("Admin Price Update Clicked", { pricePerCrore: pricePerCrore }); }}
+                            onClick={() => { handleSavePrice(); MixpanelUtils.track(MixpanelEvents.ADMIN_SETTINGS_PRICE_UPDATE_CLICKED, { pricePerCrore: pricePerCrore }); }}
                             disabled={loading || !pricePerCrore}
                             className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
                         >
@@ -118,7 +119,7 @@ export default function AdminSettingsPage() {
                 <div className="space-y-4">
                     <h2 className="text-lg font-semibold text-white">View Preferences</h2>
                     <button
-                        onClick={() => { switchToUserView(); MixpanelUtils.track("Switch View Clicked", { to: "User" }); }}
+                        onClick={() => { switchToUserView(); MixpanelUtils.track(MixpanelEvents.ADMIN_TO_USER_VIEW_SWITCHED, { to: "User" }); }}
                         className="w-full bg-[#1a1b23] border border-gray-700 hover:border-blue-500 hover:bg-gray-900 text-left p-4 rounded-xl flex items-center justify-between group transition-all"
                     >
                         <div className="flex items-center gap-4">
@@ -137,7 +138,7 @@ export default function AdminSettingsPage() {
                 <div className="space-y-4">
                     <h2 className="text-lg font-semibold text-white">Account Actions</h2>
                     <button
-                        onClick={() => { logout(); MixpanelUtils.track("Logout Clicked", { role: "Admin", source: "Settings Page" }); }}
+                        onClick={() => { logout(); MixpanelUtils.track(MixpanelEvents.ADMIN_LOGOUT_CLICKED, { role: "Admin", source: "Settings Page" }); }}
                         className="w-full bg-red-500/10 border border-red-500/50 hover:bg-red-500/20 text-left p-4 rounded-xl flex items-center justify-between group transition-all"
                     >
                         <div className="flex items-center gap-4">

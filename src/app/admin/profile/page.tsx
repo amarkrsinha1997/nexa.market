@@ -6,6 +6,7 @@ import PhoneInput from "@/components/ui/PhoneInput";
 import NexaAddressInput from "@/components/ui/NexaAddressInput";
 import { apiClient } from "@/lib/api/client";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
+import { MixpanelEvents } from "@/lib/config/mixpanel-events";
 import { useToast } from "@/lib/hooks/useToast";
 
 export default function AdminProfilePage() {
@@ -167,7 +168,7 @@ export default function AdminProfilePage() {
                                 />
                                 <div className="flex justify-end">
                                     <button
-                                        onClick={() => { handleSavePhone(); MixpanelUtils.track("Admin Profile Updated", { field: "Phone Number" }); }}
+                                        onClick={() => { handleSavePhone(); MixpanelUtils.track(MixpanelEvents.ADMIN_PROFILE_PHONE_UPDATED); }}
                                         disabled={savingPhone || !phoneNumber || (user?.phoneNumber === `${phoneCountry} ${phoneNumber}`)}
                                         className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-2"
                                     >
@@ -194,7 +195,7 @@ export default function AdminProfilePage() {
                                 />
                                 <div className="flex justify-end">
                                     <button
-                                        onClick={() => { handleSaveWallet(); MixpanelUtils.track("Admin Profile Updated", { field: "Wallet Address" }); }}
+                                        onClick={() => { handleSaveWallet(); MixpanelUtils.track(MixpanelEvents.ADMIN_PROFILE_WALLET_UPDATED); }}
                                         disabled={savingWallet || !walletAddress || !isWalletValid || (user?.nexaWalletAddress === walletAddress)}
                                         className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-2"
                                     >

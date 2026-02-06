@@ -11,6 +11,7 @@ import { formatNexaAmount } from "@/lib/utils/format";
 import { useAuth } from "@/lib/hooks/useAuth";
 import NexaAddressInput from "@/components/ui/NexaAddressInput";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
+import { MixpanelEvents } from "@/lib/config/mixpanel-events";
 import { useToast } from "@/lib/hooks/useToast";
 
 interface ExchangeFormProps { }
@@ -81,7 +82,7 @@ export default function ExchangeForm(props: ExchangeFormProps) {
                                 if (value === '' || /^\d+$/.test(value)) {
                                     setAmount(value);
                                     if (value) {
-                                        MixpanelUtils.track("Exchange Amount Entered", { amount: value });
+                                        MixpanelUtils.track(MixpanelEvents.EXCHANGE_FORM_AMOUNT_ENTERED, { amount: value });
                                     }
                                 }
                             }}
@@ -150,7 +151,7 @@ export default function ExchangeForm(props: ExchangeFormProps) {
                         onClick={async () => {
                             if (!isEditingWallet) {
                                 setIsEditingWallet(true);
-                                MixpanelUtils.track("Exchange Wallet Edit Clicked");
+                                MixpanelUtils.track(MixpanelEvents.EXCHANGE_FORM_WALLET_EDIT_CLICKED);
                                 return;
                             }
 
@@ -164,7 +165,7 @@ export default function ExchangeForm(props: ExchangeFormProps) {
                                 try {
                                     await UserApi.updateProfile({ nexaWalletAddress: current });
                                     await refetch();
-                                    MixpanelUtils.track("Exchange Wallet Saved", { address: current });
+                                    MixpanelUtils.track(MixpanelEvents.EXCHANGE_FORM_WALLET_SAVED, { address: current });
                                 } catch (error) {
                                     console.error("Failed to save wallet", error);
                                 } finally {
@@ -204,7 +205,7 @@ export default function ExchangeForm(props: ExchangeFormProps) {
                                         <button
                                             onClick={() => {
                                                 navigator.clipboard.writeText(nexaAddress);
-                                                MixpanelUtils.track("Exchange Wallet Address Copied");
+                                                MixpanelUtils.track(MixpanelEvents.EXCHANGE_FORM_WALLET_ADDRESS_COPIED);
                                             }}
                                             className="text-gray-500 hover:text-white shrink-0"
                                         >
@@ -222,7 +223,7 @@ export default function ExchangeForm(props: ExchangeFormProps) {
 
             {/* Pay Button */}
             <button
-                onClick={() => { handleBuyNexa(); MixpanelUtils.track("Buy Nexa Clicked", { amount, estimatedNexa }); }}
+                onClick={() => { handleBuyNexa(); MixpanelUtils.track(MixpanelEvents.EXCHANGE_FORM_BUY_NEXA_CLICKED, { amount, estimatedNexa }); }}
                 disabled={!amount || parseFloat(amount) < 1 || creatingOrder || !nexaAddress || !isWalletValid}
                 className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
             >

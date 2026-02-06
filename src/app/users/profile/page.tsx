@@ -10,6 +10,7 @@ import CopyButton from "@/components/ui/CopyButton";
 import { Save, User as UserIcon, Calendar, Mail, Wallet, ChevronRight, LogOut } from "lucide-react";
 import { format } from "date-fns";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
+import { MixpanelEvents } from "@/lib/config/mixpanel-events";
 
 export default function ProfilePage() {
     const { user, loading, refetch, logout } = useAuth();
@@ -160,7 +161,7 @@ export default function ProfilePage() {
                     )}
 
                     <button
-                        onClick={() => { handleSave(); MixpanelUtils.track("User Phone Updated", { countryCode }); }}
+                        onClick={() => { handleSave(); MixpanelUtils.track(MixpanelEvents.USER_PROFILE_PHONE_UPDATED, { countryCode }); }}
                         disabled={isSaving || (user.phoneNumber === `${countryCode} ${localPhoneNumber}`)}
                         className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                     >
@@ -175,7 +176,7 @@ export default function ProfilePage() {
                     onClick={() => {
                         if (confirm("Are you sure you want to log out? This will clear all session data.")) {
                             logout();
-                            MixpanelUtils.track("Logout Clicked", { role: "User", source: "Profile Page" });
+                            MixpanelUtils.track(MixpanelEvents.USER_LOGOUT_CLICKED, { role: "User", source: "Profile Page" });
                         }
                     }}
                     className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-500 font-semibold py-3 rounded-xl border border-red-500/20 transition-all flex items-center justify-center gap-2"

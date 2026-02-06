@@ -5,6 +5,7 @@ import { apiClient } from "@/lib/api/client";
 import { Plus, Edit, Trash2, Power, PowerOff, Clock, Search, Zap, Filter } from "lucide-react";
 import UPIFormModal from "@/components/features/admin/UPIFormModal";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
+import { MixpanelEvents } from "@/lib/config/mixpanel-events";
 
 interface UPI {
     id: string;
@@ -136,7 +137,7 @@ export default function UPIManagementPage() {
                         {(["ALL", "ACTIVE", "INACTIVE"] as const).map((status) => (
                             <button
                                 key={status}
-                                onClick={() => { setFilterStatus(status); MixpanelUtils.track("Filter Status Changed", { status }); }}
+                                onClick={() => { setFilterStatus(status); MixpanelUtils.track(MixpanelEvents.ADMIN_UPI_FILTER_STATUS_CHANGED, { status }); }}
                                 className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${filterStatus === status
                                     ? "bg-gray-700 text-white shadow-sm"
                                     : "text-gray-400 hover:text-gray-200"
@@ -164,7 +165,7 @@ export default function UPIManagementPage() {
                         </p>
                         {upis.length === 0 && (
                             <button
-                                onClick={() => { handleAdd(); MixpanelUtils.track("UPI Add Clicked", { source: "Empty State" }); }}
+                                onClick={() => { handleAdd(); MixpanelUtils.track(MixpanelEvents.ADMIN_UPI_ADD_CLICKED, { source: "Empty State" }); }}
                                 className="mt-6 text-blue-500 hover:text-blue-400 font-medium text-sm"
                             >
                                 + Add New UPI
@@ -193,7 +194,7 @@ export default function UPIManagementPage() {
                                             <tr key={upi.id} className="hover:bg-white/[0.02] transition-colors group">
                                                 <td className="px-6 py-4">
                                                     <button
-                                                        onClick={() => { handleToggle(upi.id); MixpanelUtils.track("UPI Toggle Clicked", { id: upi.id, active: !upi.isActive }); }}
+                                                        onClick={() => { handleToggle(upi.id); MixpanelUtils.track(MixpanelEvents.ADMIN_UPI_TOGGLE_CLICKED, { id: upi.id, active: !upi.isActive }); }}
                                                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#15161c] ${upi.isActive ? 'bg-blue-600' : 'bg-gray-700'
                                                             }`}
                                                     >
@@ -254,7 +255,7 @@ export default function UPIManagementPage() {
                                                         </button>
                                                         {deleteConfirm === upi.id ? (
                                                             <button
-                                                                onClick={() => { handleDelete(upi.id); MixpanelUtils.track("UPI Delete Confirmed", { id: upi.id }); }}
+                                                                onClick={() => { handleDelete(upi.id); MixpanelUtils.track(MixpanelEvents.ADMIN_UPI_DELETE_CONFIRMED, { id: upi.id }); }}
                                                                 className="px-3 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
                                                             >
                                                                 Confirm
@@ -306,7 +307,7 @@ export default function UPIManagementPage() {
                                                     </span>
                                                 )}
                                                 <button
-                                                    onClick={() => { handleToggle(upi.id); MixpanelUtils.track("UPI Toggle Clicked", { id: upi.id, active: !upi.isActive }); }}
+                                                    onClick={() => { handleToggle(upi.id); MixpanelUtils.track(MixpanelEvents.ADMIN_UPI_TOGGLE_CLICKED, { id: upi.id, active: !upi.isActive }); }}
                                                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#15161c] ${upi.isActive ? 'bg-blue-600' : 'bg-gray-700'}`}
                                                 >
                                                     <span
@@ -349,7 +350,7 @@ export default function UPIManagementPage() {
                                                 </button>
                                                 {deleteConfirm === upi.id ? (
                                                     <button
-                                                        onClick={() => { handleDelete(upi.id); MixpanelUtils.track("UPI Delete Confirmed", { id: upi.id, device: "Mobile" }); }}
+                                                        onClick={() => { handleDelete(upi.id); MixpanelUtils.track(MixpanelEvents.ADMIN_UPI_DELETE_CONFIRMED, { id: upi.id, device: "Mobile" }); }}
                                                         className="px-3 py-2 bg-red-600 rounded-lg text-white text-xs font-bold"
                                                     >
                                                         Confirm
@@ -373,7 +374,7 @@ export default function UPIManagementPage() {
 
                 {/* Floating Add Button */}
                 <button
-                    onClick={() => { handleAdd(); MixpanelUtils.track("UPI Add Clicked", { source: "Floating Button" }); }}
+                    onClick={() => { handleAdd(); MixpanelUtils.track(MixpanelEvents.ADMIN_UPI_ADD_CLICKED, { source: "Floating Button" }); }}
                     className="fixed bottom-24 right-6 md:bottom-10 md:right-10 z-50 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 md:px-6 md:py-3 shadow-lg hover:shadow-xl transition-all shadow-blue-900/30 active:scale-95"
                 >
                     <Plus size={24} />

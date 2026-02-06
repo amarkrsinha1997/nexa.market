@@ -9,6 +9,7 @@ import PhoneInput from "@/components/ui/PhoneInput";
 import NexaAddressInput from "@/components/ui/NexaAddressInput";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
+import { MixpanelEvents } from "@/lib/config/mixpanel-events";
 
 export default function OnboardingForm() {
     const router = useRouter();
@@ -57,7 +58,7 @@ export default function OnboardingForm() {
                 await refetch();
 
                 // Track Onboarding Completion
-                MixpanelUtils.track("Onboarding Completed", {
+                MixpanelUtils.track(MixpanelEvents.USER_ONBOARDING_COMPLETED, {
                     countryCode,
                     hasWallet: !!nexaAddress
                 });

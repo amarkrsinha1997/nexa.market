@@ -9,6 +9,7 @@ import { User } from "@prisma/client";
 import { useState } from "react";
 import LifecycleViewer from "./LifecycleViewer";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
+import { MixpanelEvents } from "@/lib/config/mixpanel-events";
 
 interface LedgerListProps {
     orders: Order[];
@@ -151,7 +152,7 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision, o
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             navigator.clipboard.writeText(order.nexaAddress!);
-                                            MixpanelUtils.track("Destination Address Copied", { source: "Ledger List", orderId: order.id });
+                                            MixpanelUtils.track(MixpanelEvents.LEDGER_DESTINATION_ADDRESS_COPIED, { source: "Ledger List", orderId: order.id });
                                         }}
                                         className="p-1 px-2 bg-gray-800 hover:bg-gray-700 rounded text-[10px] text-gray-400 transition-colors"
                                     >
@@ -260,7 +261,7 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision, o
                                         e.stopPropagation();
                                         const newExpanded = !isExpanded;
                                         toggleExpanded(order.id);
-                                        MixpanelUtils.track("Order History Toggled", { orderId: order.id, expanded: newExpanded });
+                                        MixpanelUtils.track(MixpanelEvents.LEDGER_ORDER_HISTORY_TOGGLED, { orderId: order.id, expanded: newExpanded });
                                     }}
                                     className="w-full flex items-center justify-center gap-2 text-gray-500 hover:text-white text-xs py-1 transition-colors"
                                 >

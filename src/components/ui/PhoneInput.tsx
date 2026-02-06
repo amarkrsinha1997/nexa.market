@@ -39,10 +39,14 @@ export default function PhoneInput({
                 />
                 <input
                     type="tel"
+                    id="phone"
+                    name="phone"
                     value={phoneNumber}
                     onChange={handleNumberChange}
                     placeholder="1234567890"
                     maxLength={10}
+                    autoComplete="tel"
+                    inputMode="tel"
                     className="flex-1 w-full p-3 border border-l-0 border-gray-700 rounded-r-md bg-[#2a2b36] text-white placeholder-gray-600 focus:ring-2 focus:ring-blue-500/50 outline-none transition-colors"
                 />
             </div>

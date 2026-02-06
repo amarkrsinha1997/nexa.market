@@ -11,6 +11,7 @@ import PaymentDeeplink from "@/components/features/payment/PaymentDeeplink";
 import PaymentConfirmation from "@/components/features/payment/PaymentConfirmation";
 import { formatNexaAmount } from "@/lib/utils/format";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
+import { MixpanelEvents } from "@/lib/config/mixpanel-events";
 import { useToast } from "@/lib/hooks/useToast";
 
 export default function PaymentPage() {
@@ -54,7 +55,7 @@ export default function PaymentPage() {
         try {
             const res = await OrdersApi.confirmPayment(id as string);
             if (res.success) {
-                MixpanelUtils.track("Payment Confirmed By User", { orderId: id, amount: order?.amountINR });
+                MixpanelUtils.track(MixpanelEvents.PAYMENT_PAGE_CONFIRM_CLICKED, { orderId: id, amount: order?.amountINR });
                 // Fetch updated details as requested to ensure UI is in sync and validation is complete
                 const detailsRes = await OrdersApi.getPaymentDetails(id as string);
                 if (detailsRes.success && detailsRes.data) {
@@ -74,7 +75,7 @@ export default function PaymentPage() {
             // Auto-open UPI app
             window.location.href = upiString;
             setDeeplinkTriggered(true);
-            MixpanelUtils.track("UPI Deeplink Auto-Triggered", { orderId: id, upiString });
+            MixpanelUtils.track(MixpanelEvents.PAYMENT_PAGE_UPI_AUTO_TRIGGERED, { orderId: id, upiString });
         }
     }, [upiString, deeplinkTriggered, order, id]);
 
@@ -114,7 +115,7 @@ export default function PaymentPage() {
                             <button
                                 onClick={() => {
                                     navigator.clipboard.writeText(order.nexaAddress!);
-                                    MixpanelUtils.track("Destination Address Copied", { source: "Payment Page", orderId: id });
+                                    MixpanelUtils.track(MixpanelEvents.PAYMENT_PAGE_DESTINATION_ADDRESS_COPIED, { source: "Payment Page", orderId: id });
                                 }}
                                 className="shrink-0 p-1.5 hover:bg-blue-500/10 text-gray-500 hover:text-blue-400 rounded transition-colors"
                                 title="Copy Address"

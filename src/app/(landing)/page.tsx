@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight, Shield, Zap, Lock, TrendingUp, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
+import { MixpanelEvents } from "@/lib/config/mixpanel-events";
 
 export default function LandingPage() {
     const { user, isAuthenticated } = useAuth();
@@ -29,7 +30,7 @@ export default function LandingPage() {
             const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
             if (scrollPercent > 50 && !scrolledPast50) {
                 scrolledPast50 = true;
-                MixpanelUtils.track("Landing Scrolled 50%");
+                MixpanelUtils.track(MixpanelEvents.LANDING_PAGE_SCROLLED_50_PERCENT);
             }
         };
         window.addEventListener("scroll", handleScroll);
@@ -93,7 +94,7 @@ export default function LandingPage() {
                 <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
                     <div
                         className="flex items-center gap-3 group cursor-pointer"
-                        onClick={() => MixpanelUtils.track("Landing Logo Clicked")}
+                        onClick={() => MixpanelUtils.track(MixpanelEvents.LANDING_PAGE_LOGO_CLICKED)}
                     >
                         <div className="w-10 h-10 relative transition-transform duration-500 group-hover:rotate-[360deg]">
                             <Image src="/nexa-logo.png" alt="Nexa" fill className="object-contain" />
@@ -103,7 +104,7 @@ export default function LandingPage() {
                         </h1>
                     </div>
                     <button
-                        onClick={() => { handleLogin(); MixpanelUtils.track("Landing Sign In Clicked"); }}
+                        onClick={() => { handleLogin(); MixpanelUtils.track(MixpanelEvents.LANDING_PAGE_SIGN_IN_CLICKED); }}
                         className="px-6 py-2.5 bg-royal-blue hover:bg-royal-blue-hover text-white rounded-full font-semibold transition-all shadow-lg shadow-royal-blue/20 flex items-center gap-2 group"
                     >
                         Sign In
@@ -128,14 +129,14 @@ export default function LandingPage() {
 
                         <div className="flex flex-col sm:flex-row gap-4 pt-4 animate-fade-in-up delay-300">
                             <button
-                                onClick={() => { handleLogin(); MixpanelUtils.track("Landing Buy Now Clicked"); }}
+                                onClick={() => { handleLogin(); MixpanelUtils.track(MixpanelEvents.LANDING_PAGE_BUY_NEXA_CLICKED); }}
                                 className="group nexa-gradient-bg text-black font-bold px-10 py-4 rounded-full transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(139,92,246,0.3)] flex items-center gap-2"
                             >
                                 Buy Nexa Now
                                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
                             </button>
                             <button
-                                onClick={() => { window.open("https://www.coingecko.com/en/coins/nexa", "_blank"); MixpanelUtils.track("Landing View Markets Clicked"); }}
+                                onClick={() => { window.open("https://www.coingecko.com/en/coins/nexa", "_blank"); MixpanelUtils.track(MixpanelEvents.LANDING_PAGE_VIEW_MARKETS_CLICKED); }}
                                 className="px-10 py-4 rounded-full border border-white/10 hover:bg-white/5 transition-all text-white font-semibold"
                             >
                                 View Markets
