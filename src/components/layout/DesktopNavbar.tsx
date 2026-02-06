@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Menu, X, Home, User as UserIcon, LogOut, FileText } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth"; // for logout
+import { MixpanelUtils } from "@/lib/utils/mixpanel";
 
 export default function DesktopNavbar() {
     const [isOpen, setIsOpen] = useState(false);
@@ -42,20 +43,20 @@ export default function DesktopNavbar() {
                     </button>
                 </div>
                 <div className="p-4 flex flex-col gap-4">
-                    <Link href="/users/home" className="flex items-center gap-3 p-2 hover:bg-gray-800 rounded" onClick={() => setIsOpen(false)}>
+                    <Link href="/users/home" className="flex items-center gap-3 p-2 hover:bg-gray-800 rounded" onClick={() => { setIsOpen(false); MixpanelUtils.track("Sidebar Clicked", { item: "Home", role: "User", device: "Desktop" }); }}>
                         <Home size={20} />
                         Home
                     </Link>
-                    <Link href="/users/profile" className="flex items-center gap-3 p-2 hover:bg-gray-800 rounded" onClick={() => setIsOpen(false)}>
+                    <Link href="/users/profile" className="flex items-center gap-3 p-2 hover:bg-gray-800 rounded" onClick={() => { setIsOpen(false); MixpanelUtils.track("Sidebar Clicked", { item: "Profile", role: "User", device: "Desktop" }); }}>
                         <UserIcon size={20} />
                         Profile
                     </Link>
-                    <Link href="/users/ledger" className="flex items-center gap-3 p-2 hover:bg-gray-800 rounded" onClick={() => setIsOpen(false)}>
+                    <Link href="/users/ledger" className="flex items-center gap-3 p-2 hover:bg-gray-800 rounded" onClick={() => { setIsOpen(false); MixpanelUtils.track("Sidebar Clicked", { item: "Ledger", role: "User", device: "Desktop" }); }}>
                         <FileText size={20} />
                         Ledger
                     </Link>
 
-                    <button onClick={logout} className="flex items-center gap-3 p-2 hover:bg-red-900/20 text-red-500 rounded mt-auto">
+                    <button onClick={() => { logout(); MixpanelUtils.track("Logout Clicked", { role: "User" }); }} className="flex items-center gap-3 p-2 hover:bg-red-900/20 text-red-500 rounded mt-auto">
                         <LogOut size={20} />
                         Logout
                     </button>

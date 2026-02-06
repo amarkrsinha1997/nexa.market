@@ -9,6 +9,7 @@ import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { format } from "date-fns";
 import { formatNexaAmount } from "@/lib/utils/format";
+import { MixpanelUtils } from "@/lib/utils/mixpanel";
 
 export default function OrderDetailsPage() {
     const { id } = useParams();
@@ -65,7 +66,11 @@ export default function OrderDetailsPage() {
         <div className="max-w-md mx-auto space-y-6 pt-8 px-4 pb-20">
             {/* Header */}
             <div className="flex items-center gap-2">
-                <Link href="/users/ledger" className="text-gray-400 hover:text-white p-2 -ml-2 rounded-full hover:bg-gray-800 transition-colors">
+                <Link
+                    href="/users/ledger"
+                    onClick={() => MixpanelUtils.track("Order Details Back Clicked", { source: "User Order Details", orderId: id })}
+                    className="text-gray-400 hover:text-white p-2 -ml-2 rounded-full hover:bg-gray-800 transition-colors"
+                >
                     <ArrowLeft size={20} />
                 </Link>
                 <h1 className="text-xl font-bold text-white">Order Details</h1>
@@ -114,7 +119,10 @@ export default function OrderDetailsPage() {
                                     {order.nexaAddress}
                                 </span>
                                 <button
-                                    onClick={() => navigator.clipboard.writeText(order.nexaAddress!)}
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(order.nexaAddress!);
+                                        MixpanelUtils.track("Destination Address Copied", { source: "Order Details", orderId: id });
+                                    }}
                                     className="p-1 px-2 bg-gray-800 hover:bg-gray-700 rounded text-[10px] text-gray-400 shrink-0"
                                 >
                                     Copy
@@ -142,7 +150,11 @@ export default function OrderDetailsPage() {
             </div>
 
             <div className="text-center">
-                <Link href="/users/home" className="text-blue-500 hover:text-blue-400 text-sm font-medium">
+                <Link
+                    href="/users/home"
+                    onClick={() => MixpanelUtils.track("Order Details Home Clicked", { orderId: id })}
+                    className="text-blue-500 hover:text-blue-400 text-sm font-medium"
+                >
                     Return to Dashboard
                 </Link>
             </div>

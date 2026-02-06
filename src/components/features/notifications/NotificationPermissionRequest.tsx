@@ -3,6 +3,7 @@
 import { useNotifications } from "@/lib/hooks/useNotifications";
 import { Bell } from "lucide-react";
 import { useEffect, useState } from "react";
+import { MixpanelUtils } from "@/lib/utils/mixpanel";
 
 export default function NotificationPermissionRequest() {
     const { isSupported, isSubscribed, permission, subscribe } = useNotifications();
@@ -35,13 +36,13 @@ export default function NotificationPermissionRequest() {
                     </div>
                     <div className="flex gap-3">
                         <button
-                            onClick={() => subscribe()}
+                            onClick={() => { subscribe(); MixpanelUtils.track("Notification Subscribe Clicked", { permission }); }}
                             className="text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
                         >
                             {permission === 'granted' ? 'Retry' : 'Enable'}
                         </button>
                         <button
-                            onClick={() => setVisible(false)}
+                            onClick={() => { setVisible(false); MixpanelUtils.track("Notification Later Clicked"); }}
                             className="text-xs font-medium text-gray-400 hover:text-white px-2 py-2"
                         >
                             Later

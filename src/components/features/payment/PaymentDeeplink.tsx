@@ -1,5 +1,7 @@
 "use client";
 
+import { MixpanelUtils } from "@/lib/utils/mixpanel";
+
 interface PaymentDeeplinkProps {
     upiString: string;
 }
@@ -8,6 +10,7 @@ export default function PaymentDeeplink({ upiString }: PaymentDeeplinkProps) {
     return (
         <a
             href={upiString}
+            onClick={() => MixpanelUtils.track("Pay via App Clicked", { upiString })}
             className="block w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 rounded-xl transition-colors"
         >
             Pay via App

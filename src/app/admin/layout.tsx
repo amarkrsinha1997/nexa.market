@@ -7,6 +7,7 @@ import { Loader2, FileText, Settings, User, Wallet } from "lucide-react";
 import Link from "next/link";
 import { LocalStorageUtils } from "@/lib/utils/storage";
 import NotificationPermissionRequest from "@/components/features/notifications/NotificationPermissionRequest";
+import { MixpanelUtils } from "@/lib/utils/mixpanel";
 
 export default function AdminLayout({
     children,
@@ -72,6 +73,7 @@ export default function AdminLayout({
                             <Link
                                 key={item.name}
                                 href={item.href}
+                                onClick={() => MixpanelUtils.track("Sidebar Clicked", { item: item.name, role: "Admin", device: "Desktop" })}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
                                     ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
                                     : "text-gray-400 hover:text-white hover:bg-white/5"
@@ -101,6 +103,7 @@ export default function AdminLayout({
                             <Link
                                 key={item.name}
                                 href={item.href}
+                                onClick={() => MixpanelUtils.track("Sidebar Clicked", { item: item.name, role: "Admin", device: "Mobile" })}
                                 className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? "text-blue-500" : "text-gray-500"
                                     }`}
                             >

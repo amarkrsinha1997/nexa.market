@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import PhoneInput from "@/components/ui/PhoneInput";
 import NexaAddressInput from "@/components/ui/NexaAddressInput";
 import { apiClient } from "@/lib/api/client";
+import { MixpanelUtils } from "@/lib/utils/mixpanel";
 
 export default function AdminProfilePage() {
     const { user, isSuperAdmin } = useRole();
@@ -164,7 +165,7 @@ export default function AdminProfilePage() {
                                 />
                                 <div className="flex justify-end">
                                     <button
-                                        onClick={handleSavePhone}
+                                        onClick={() => { handleSavePhone(); MixpanelUtils.track("Admin Profile Updated", { field: "Phone Number" }); }}
                                         disabled={savingPhone || !phoneNumber || (user?.phoneNumber === `${phoneCountry} ${phoneNumber}`)}
                                         className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-2"
                                     >
@@ -191,7 +192,7 @@ export default function AdminProfilePage() {
                                 />
                                 <div className="flex justify-end">
                                     <button
-                                        onClick={handleSaveWallet}
+                                        onClick={() => { handleSaveWallet(); MixpanelUtils.track("Admin Profile Updated", { field: "Wallet Address" }); }}
                                         disabled={savingWallet || !walletAddress || !isWalletValid || (user?.nexaWalletAddress === walletAddress)}
                                         className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-2"
                                     >

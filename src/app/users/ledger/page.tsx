@@ -10,6 +10,8 @@ import LedgerList from "@/components/features/ledger/LedgerList";
 // import PendingPaymentsTable from "@/components/admin/PendingPaymentsTable"; // Removed: Unified view
 import { Order } from "@/types/order";
 
+import { MixpanelUtils } from "@/lib/utils/mixpanel";
+
 type FilterType = "all" | "confirmed" | "verified" | "pending" | "released" | "rejected" | "transfer_failed";
 
 export default function LedgerPage({ adminView = false }: { adminView?: boolean }) {
@@ -101,6 +103,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
         try {
             const res = await apiClient.post<{ data: Order }>(`/admin/orders/${orderId}/check`, {});
             if (res.success && res.data) {
+                MixpanelUtils.track("Admin Order Checked", { orderId });
                 // Refetch to ensure UI consistency with backend
                 await fetchOrders(1);
             }
@@ -118,6 +121,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                 reason
             });
             if (res.success && res.data) {
+                MixpanelUtils.track("Admin Order Decision", { orderId, decision, reason });
                 // Success case
             }
         } catch (error) {
@@ -133,6 +137,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
         try {
             const res = await apiClient.post(`/admin/orders/${orderId}/reprocess-payment`, {});
             if (res.success) {
+                MixpanelUtils.track("Admin Order Reprocessed", { orderId });
                 alert("Payment retry initiated successfully.");
             } else {
                 alert(`Failed: ${res.message}`);
@@ -177,7 +182,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                     ) : (
                         <>
                             <button
-                                onClick={() => updateFilter("pending")}
+                                onClick={() => { updateFilter("pending"); MixpanelUtils.track("Ledger Filter Clicked", { filter: "pending" }); }}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "pending"
                                     ? "bg-amber-500/20 text-amber-500 border border-amber-500/50"
                                     : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
@@ -186,7 +191,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                                 NEXA PENDING
                             </button>
                             <button
-                                onClick={() => updateFilter("transfer_failed")}
+                                onClick={() => { updateFilter("transfer_failed"); MixpanelUtils.track("Ledger Filter Clicked", { filter: "transfer_failed" }); }}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${filter === "transfer_failed"
                                     ? "bg-orange-500/20 text-orange-500 border border-orange-500/50"
                                     : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
@@ -196,7 +201,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                                 TRANSFER PENDING
                             </button>
                             <button
-                                onClick={() => updateFilter("released")}
+                                onClick={() => { updateFilter("released"); MixpanelUtils.track("Ledger Filter Clicked", { filter: "released" }); }}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "released"
                                     ? "bg-emerald-500/20 text-emerald-500 border border-emerald-500/50"
                                     : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
@@ -205,7 +210,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                                 NEXA RELEASED
                             </button>
                             <button
-                                onClick={() => updateFilter("rejected")}
+                                onClick={() => { updateFilter("rejected"); MixpanelUtils.track("Ledger Filter Clicked", { filter: "rejected" }); }}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "rejected"
                                     ? "bg-red-500/20 text-red-500 border border-red-500/50"
                                     : "bg-[#1a1b23] text-gray-400 hover:bg-[#2a2b36] border border-gray-800"
@@ -245,7 +250,7 @@ export default function LedgerPage({ adminView = false }: { adminView?: boolean 
                         {hasMore && (
                             <div className="flex justify-center pb-8">
                                 <button
-                                    onClick={handleLoadMore}
+                                    onClick={() => { handleLoadMore(); MixpanelUtils.track("Ledger Load More Clicked", { page }); }}
                                     disabled={loadingMore}
                                     className="bg-gray-800 hover:bg-gray-700 text-gray-200 px-6 py-2 rounded-full text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
                                 >

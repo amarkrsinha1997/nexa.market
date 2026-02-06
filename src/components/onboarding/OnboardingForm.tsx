@@ -8,6 +8,7 @@ import DatePicker from "@/components/ui/DatePicker";
 import PhoneInput from "@/components/ui/PhoneInput";
 import NexaAddressInput from "@/components/ui/NexaAddressInput";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { MixpanelUtils } from "@/lib/utils/mixpanel";
 
 export default function OnboardingForm() {
     const router = useRouter();
@@ -54,6 +55,12 @@ export default function OnboardingForm() {
             if (response.success && response.data) {
                 // Refresh the profile cache
                 await refetch();
+
+                // Track Onboarding Completion
+                MixpanelUtils.track("Onboarding Completed", {
+                    countryCode,
+                    hasWallet: !!nexaAddress
+                });
 
                 // Force a hard navigation to ensure state is picked up
                 window.location.href = "/users/home";

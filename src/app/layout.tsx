@@ -5,6 +5,7 @@ import "./globals.css";
 import GoogleAuthProviderWrapper from "@/providers/GoogleAuthProviderWrapper";
 import { AuthProvider } from "@/lib/contexts/AuthContext";
 import PriceSchedulerInitializer from "@/components/providers/PriceSchedulerInitializer";
+import MixpanelProvider from "@/components/providers/MixpanelProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,6 +26,7 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <AuthProvider>
               <PriceSchedulerInitializer />
+              <MixpanelProvider />
               {children}
             </AuthProvider>
           </Suspense>

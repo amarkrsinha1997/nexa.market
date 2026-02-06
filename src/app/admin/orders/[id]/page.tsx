@@ -10,6 +10,7 @@ import { Loader2, ArrowLeft, User as UserIcon, Calendar, Wallet, CheckCircle, XC
 import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { format } from "date-fns";
+import { MixpanelUtils } from "@/lib/utils/mixpanel";
 
 export default function AdminOrderPage({ params }: { params: Promise<{ id: string }> }) {
     const { user, loading: authLoading } = useAuth();
@@ -234,7 +235,7 @@ export default function AdminOrderPage({ params }: { params: Promise<{ id: strin
 
                             {order.status === "VERIFICATION_PENDING" && (
                                 <button
-                                    onClick={() => handleAction('check')}
+                                    onClick={() => { handleAction('check'); MixpanelUtils.track("Order Check Locked", { orderId: order.id }); }}
                                     disabled={processing}
                                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition-all disabled:opacity-50"
                                 >
@@ -245,7 +246,7 @@ export default function AdminOrderPage({ params }: { params: Promise<{ id: strin
                             {order.status === "VERIFYING" && (order.checkedBy === user?.id || user?.role === 'SUPERADMIN') && (
                                 <div className="space-y-3">
                                     <button
-                                        onClick={() => handleAction('approve')}
+                                        onClick={() => { handleAction('approve'); MixpanelUtils.track("Order Payment Approved", { orderId: order.id, amount: order.amountINR }); }}
                                         disabled={processing}
                                         className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                                     >
@@ -255,7 +256,10 @@ export default function AdminOrderPage({ params }: { params: Promise<{ id: strin
                                     <button
                                         onClick={() => {
                                             const reason = prompt("Reason for rejection:");
-                                            if (reason) handleAction('reject', reason);
+                                            if (reason) {
+                                                handleAction('reject', reason);
+                                                MixpanelUtils.track("Order Rejected", { orderId: order.id, reason });
+                                            }
                                         }}
                                         disabled={processing}
                                         className="w-full bg-red-600/10 hover:bg-red-600/20 text-red-500 border border-red-600/20 font-medium py-3 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"

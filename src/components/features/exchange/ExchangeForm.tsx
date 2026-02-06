@@ -10,6 +10,7 @@ import { useNexaPrice } from "@/lib/hooks/useNexaPrice";
 import { formatNexaAmount } from "@/lib/utils/format";
 import { useAuth } from "@/lib/hooks/useAuth";
 import NexaAddressInput from "@/components/ui/NexaAddressInput";
+import { MixpanelUtils } from "@/lib/utils/mixpanel";
 
 interface ExchangeFormProps { }
 
@@ -142,6 +143,7 @@ export default function ExchangeForm(props: ExchangeFormProps) {
                                 try {
                                     await UserApi.updateProfile({ nexaWalletAddress: current });
                                     await refetch();
+                                    MixpanelUtils.track("Exchange Wallet Saved", { address: current });
                                 } catch (error) {
                                     console.error("Failed to save wallet", error);
                                 } finally {
@@ -196,7 +198,7 @@ export default function ExchangeForm(props: ExchangeFormProps) {
 
             {/* Pay Button */}
             <button
-                onClick={handleBuyNexa}
+                onClick={() => { handleBuyNexa(); MixpanelUtils.track("Buy Nexa Clicked", { amount, estimatedNexa }); }}
                 disabled={!amount || parseFloat(amount) <= 0 || creatingOrder || !nexaAddress || !isWalletValid}
                 className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
             >

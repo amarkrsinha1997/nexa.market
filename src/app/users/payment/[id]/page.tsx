@@ -11,6 +11,7 @@ import UPICopy from "@/components/features/payment/UPICopy";
 import PaymentDeeplink from "@/components/features/payment/PaymentDeeplink";
 import PaymentConfirmation from "@/components/features/payment/PaymentConfirmation";
 import { formatNexaAmount } from "@/lib/utils/format";
+import { MixpanelUtils } from "@/lib/utils/mixpanel";
 
 export default function PaymentPage() {
     const { id } = useParams();
@@ -51,6 +52,7 @@ export default function PaymentPage() {
         try {
             const res = await OrdersApi.confirmPayment(id as string);
             if (res.success) {
+                MixpanelUtils.track("Payment Confirmed By User", { orderId: id, amount: order?.amountINR });
                 // Fetch updated details as requested to ensure UI is in sync and validation is complete
                 const detailsRes = await OrdersApi.getPaymentDetails(id as string);
                 if (detailsRes.success && detailsRes.data) {
@@ -121,6 +123,7 @@ export default function PaymentPage() {
                             <button
                                 onClick={() => {
                                     navigator.clipboard.writeText(order.nexaAddress!);
+                                    MixpanelUtils.track("Destination Address Copied", { source: "Payment Page", orderId: id });
                                 }}
                                 className="shrink-0 p-1.5 hover:bg-blue-500/10 text-gray-500 hover:text-blue-400 rounded transition-colors"
                                 title="Copy Address"

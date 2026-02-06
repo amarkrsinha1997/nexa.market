@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowRight, Shield, Zap, Lock, TrendingUp, ChevronRight } from "lucide-react";
 import Image from "next/image";
+import { MixpanelUtils } from "@/lib/utils/mixpanel";
 
 export default function LandingPage() {
     const { user, isAuthenticated } = useAuth();
@@ -88,7 +89,7 @@ export default function LandingPage() {
                         </h1>
                     </div>
                     <button
-                        onClick={handleLogin}
+                        onClick={() => { handleLogin(); MixpanelUtils.track("Landing Sign In Clicked"); }}
                         className="px-6 py-2.5 bg-royal-blue hover:bg-royal-blue-hover text-white rounded-full font-semibold transition-all shadow-lg shadow-royal-blue/20 flex items-center gap-2 group"
                     >
                         Sign In
@@ -113,14 +114,14 @@ export default function LandingPage() {
 
                         <div className="flex flex-col sm:flex-row gap-4 pt-4 animate-fade-in-up delay-300">
                             <button
-                                onClick={handleLogin}
+                                onClick={() => { handleLogin(); MixpanelUtils.track("Landing Buy Now Clicked"); }}
                                 className="group nexa-gradient-bg text-black font-bold px-10 py-4 rounded-full transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(139,92,246,0.3)] flex items-center gap-2"
                             >
                                 Buy Nexa Now
                                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
                             </button>
                             <button
-                                onClick={() => window.open("https://www.coingecko.com/en/coins/nexa", "_blank")}
+                                onClick={() => { window.open("https://www.coingecko.com/en/coins/nexa", "_blank"); MixpanelUtils.track("Landing View Markets Clicked"); }}
                                 className="px-10 py-4 rounded-full border border-white/10 hover:bg-white/5 transition-all text-white font-semibold"
                             >
                                 View Markets

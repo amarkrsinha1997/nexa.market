@@ -8,6 +8,7 @@ import { Order } from "@/types/order";
 import { User } from "@prisma/client";
 import { useState } from "react";
 import LifecycleViewer from "./LifecycleViewer";
+import { MixpanelUtils } from "@/lib/utils/mixpanel";
 
 interface LedgerListProps {
     orders: Order[];
@@ -149,6 +150,7 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision, o
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             navigator.clipboard.writeText(order.nexaAddress!);
+                                            MixpanelUtils.track("Destination Address Copied", { source: "Ledger List", orderId: order.id });
                                         }}
                                         className="p-1 px-2 bg-gray-800 hover:bg-gray-700 rounded text-[10px] text-gray-400 transition-colors"
                                     >
@@ -245,7 +247,12 @@ export default function LedgerList({ orders, currentUser, onCheck, onDecision, o
                         {isAdminView && hasLifecycle && (
                             <>
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); toggleExpanded(order.id); }}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const newExpanded = !isExpanded;
+                                        toggleExpanded(order.id);
+                                        MixpanelUtils.track("Order History Toggled", { orderId: order.id, expanded: newExpanded });
+                                    }}
                                     className="w-full flex items-center justify-center gap-2 text-gray-500 hover:text-white text-xs py-1 transition-colors"
                                 >
                                     {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}

@@ -6,6 +6,7 @@ import { apiClient } from "@/lib/api/client";
 import NexaAddressInput from "@/components/ui/NexaAddressInput";
 import BackButton from "@/components/ui/BackButton";
 import { Save, Wallet } from "lucide-react";
+import { MixpanelUtils } from "@/lib/utils/mixpanel";
 
 export default function WalletPage() {
     const { user, loading, checkAuth } = useAuth();
@@ -78,7 +79,7 @@ export default function WalletPage() {
                 )}
 
                 <button
-                    onClick={handleSave}
+                    onClick={() => { handleSave(); MixpanelUtils.track("User Wallet Updated", { address }); }}
                     disabled={!isValid || isSaving || address === user?.nexaWalletAddress}
                     className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                 >
