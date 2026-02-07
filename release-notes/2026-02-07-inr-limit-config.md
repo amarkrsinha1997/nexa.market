@@ -11,8 +11,9 @@
 - **Improved Performance & Sync**: Implemented backend caching in `ConfigService` and an in-memory client cache in `PriceSchedulerService`.
 - **Simplified Deployment**: Removed `localStorage` dependency for price and limit configuration.
 - **Enhanced Reliability**: Added immediate frontend refresh after Admin updates.
-- **UX Improvement**: Set India (+91) as the default country in the phone number input and prioritized India in the country selection list.
-- **UPI Builder Refactor**: Simplified UPI payment URLs to only include essential parameters (`pa`, `pn`, `tn`, `am`), removing `cu` (currency) and `tr` (transaction reference) for better compatibility with Indian banking apps.
+- **Payment UX Simplification**: Removed the "Pay" button and automatic UPI app opening to allow users to scan the QR code or copy the address manually. Only the "Confirm Payment" button is now shown for a cleaner workflow.
+- **UPI Builder Refactor**: Simplified UPI payment URLs to only include essential parameters (`pa`, `pn`, `tn`, `am`).
+- **Dynamic Payee Name**: Payee names are now dynamically fetched from the UPI configuration instead of being hardcoded.
 - Updated `api/config` route to support fetching and updating the INR limit.
 - Created `useNexaConfig` hook for efficient config access across the app.
 - Updated Admin Settings UI with a new field for "Max INR per Order".
