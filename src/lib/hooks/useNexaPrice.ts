@@ -19,9 +19,9 @@ export function useNexaPrice(): number | null {
         } else {
             // If no cache, force fetch immediately
             (async () => {
-                const fetchedPrice = await PriceSchedulerService.forceFetch();
-                if (fetchedPrice) {
-                    setPrice(fetchedPrice);
+                const fetched = await PriceSchedulerService.forceFetch();
+                if (fetched) {
+                    setPrice(fetched.price);
                 }
             })();
         }
