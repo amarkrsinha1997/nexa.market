@@ -7,7 +7,6 @@ import { OrdersApi } from "@/lib/api/orders";
 import { CheckCircle, IndianRupee, Loader2, ArrowLeft, Wallet, Copy } from "lucide-react";
 import Link from "next/link";
 import PaymentQRCode from "@/components/features/payment/PaymentQRCode";
-import PaymentDeeplink from "@/components/features/payment/PaymentDeeplink";
 import PaymentConfirmation from "@/components/features/payment/PaymentConfirmation";
 import { formatNexaAmount } from "@/lib/utils/format";
 import { MixpanelUtils } from "@/lib/utils/mixpanel";
@@ -25,7 +24,6 @@ export default function PaymentPage() {
     const [loading, setLoading] = useState(true);
     const [confirming, setConfirming] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [deeplinkTriggered, setDeeplinkTriggered] = useState(false);
 
     useEffect(() => {
         if (!id) return;
@@ -69,15 +67,6 @@ export default function PaymentPage() {
         }
     };
 
-    // Auto-trigger UPI deeplink when page loads
-    useEffect(() => {
-        if (upiString && !deeplinkTriggered && order && order.status === "ORDER_CREATED") {
-            // Auto-open UPI app
-            window.location.href = upiString;
-            setDeeplinkTriggered(true);
-            MixpanelUtils.track(MixpanelEvents.PAYMENT_PAGE_UPI_AUTO_TRIGGERED, { orderId: id, upiString });
-        }
-    }, [upiString, deeplinkTriggered, order, id]);
 
     useEffect(() => {
         if (order && order.status !== "ORDER_CREATED") {
@@ -149,9 +138,7 @@ export default function PaymentPage() {
                     </div>
                 </div>
 
-                {/* Actions */}
                 <div className="space-y-3">
-                    <PaymentDeeplink upiString={upiString} />
                     <PaymentConfirmation onConfirm={handleConfirmPayment} confirming={confirming} />
                 </div>
             </div>
