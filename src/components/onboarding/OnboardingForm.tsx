@@ -18,7 +18,7 @@ export default function OnboardingForm() {
 
     // Fields
     const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>();
-    const [countryCode, setCountryCode] = useState("+1");
+    const [countryCode, setCountryCode] = useState("+91");
     const [localPhoneNumber, setLocalPhoneNumber] = useState("");
     const [nexaAddress, setNexaAddress] = useState("");
     const [isAddressValid, setIsAddressValid] = useState(false);
