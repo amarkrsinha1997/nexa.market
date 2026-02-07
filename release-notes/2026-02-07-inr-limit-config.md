@@ -12,6 +12,7 @@
 - **Simplified Deployment**: Removed `localStorage` dependency for price and limit configuration.
 - **Enhanced Reliability**: Added immediate frontend refresh after Admin updates.
 - **UX Improvement**: Set India (+91) as the default country in the phone number input and prioritized India in the country selection list.
+- **UPI Builder Refactor**: Simplified UPI payment URLs to only include essential parameters (`pa`, `pn`, `tn`, `am`), removing `cu` (currency) and `tr` (transaction reference) for better compatibility with Indian banking apps.
 - Updated `api/config` route to support fetching and updating the INR limit.
 - Created `useNexaConfig` hook for efficient config access across the app.
 - Updated Admin Settings UI with a new field for "Max INR per Order".

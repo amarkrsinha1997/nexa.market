@@ -82,11 +82,9 @@ export class OrdersService {
 
         // Build UPI String
         const upiString = new UPIUrlBuilder(selectedUPI.vpa)
-            .setPayeeName("nexa.org")
+            .setPayeeName(selectedUPI.merchantName || "nexa.org")
             .setAmount(amountINR)
-            .setCurrency("INR")
-            .setTransactionNote(`${user.email} | Order: ${order.id.slice(0, 8)}`)
-            .setTransactionRef(order.id)
+            .setTransactionNote(`${user.email} | Order: ${order.id}`)
             .build();
 
         return {
@@ -152,13 +150,15 @@ export class OrdersService {
             throw new ApiError("Unauthorized", 403);
         }
 
+        // Fetch merchant name for the UPI used in this order
+        const upi = await prisma.upi.findUnique({ where: { vpa: order.paymentQrId } });
+        const payeeName = upi?.merchantName || "nexa.org";
+
         // Reconstruct UPI String if needed (optional logic from original route)
         const upiString = new UPIUrlBuilder(order.paymentQrId)
-            .setPayeeName("nexa.org")
+            .setPayeeName(payeeName)
             .setAmount(order.amountINR)
-            .setCurrency("INR")
-            .setTransactionNote(`Order: ${order.id.slice(0, 8)} | ${order.user.email}`)
-            .setTransactionRef(order.id)
+            .setTransactionNote(`Order: ${order.id} | ${order.user.email}`)
             .build();
 
         return { order, upiString };
