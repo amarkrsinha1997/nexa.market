@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { OrdersApi } from "@/lib/api/orders";
 import { UserApi } from "@/lib/api/user";
-import { useNexaPrice } from "@/lib/hooks/useNexaPrice";
+import { useNexaConfig } from "@/lib/hooks/useNexaConfig";
 import { formatNexaAmount } from "@/lib/utils/format";
 import { useAuth } from "@/lib/hooks/useAuth";
 import NexaAddressInput from "@/components/ui/NexaAddressInput";
@@ -26,8 +26,10 @@ export default function ExchangeForm(props: ExchangeFormProps) {
     const [isSavingWallet, setIsSavingWallet] = useState(false);
 
     const { user, refetch } = useAuth();
-    const nexaPrice = useNexaPrice(); // Use the hook for automatic price updates
+    const { price: nexaPrice, inrLimit } = useNexaConfig(); // Use the hook for automatic config updates
     const { toast } = useToast();
+
+    const [limitExceeded, setLimitExceeded] = useState(false);
 
     // Load initial wallet from user profile
     useEffect(() => {
@@ -36,6 +38,15 @@ export default function ExchangeForm(props: ExchangeFormProps) {
             setIsWalletValid(true);
         }
     }, [user]);
+
+    // Check limit whenever amount or inrLimit changes
+    useEffect(() => {
+        if (amount && inrLimit) {
+            setLimitExceeded(parseFloat(amount) > inrLimit);
+        } else {
+            setLimitExceeded(false);
+        }
+    }, [amount, inrLimit]);
 
     // Price is INR per NEXA. So Amount / Price = Nexa Count
     // Example: 500 INR / 0.00005 = 10,000,000
@@ -48,7 +59,7 @@ export default function ExchangeForm(props: ExchangeFormProps) {
     const estimatedNexa = amount ? formatNexaAmount(calculateNexa(parseFloat(amount))) : "0";
 
     const handleBuyNexa = async () => {
-        if (!amount || !nexaAddress) return;
+        if (!amount || !nexaAddress || limitExceeded) return;
         setCreatingOrder(true);
         try {
             // Send nexaAddress explicitly to freeze it for this order
@@ -102,6 +113,11 @@ export default function ExchangeForm(props: ExchangeFormProps) {
                         <span className="font-bold text-white">INR</span>
                     </div>
                 </div>
+                {limitExceeded && (
+                    <p className="text-red-500 text-xs mt-1 px-1">
+                        Amount exceeds the maximum limit of ₹{inrLimit?.toLocaleString()} per order
+                    </p>
+                )}
             </div>
 
             {/* Arrow Divider */}
@@ -225,10 +241,15 @@ export default function ExchangeForm(props: ExchangeFormProps) {
             {/* Pay Button */}
             <button
                 onClick={() => { handleBuyNexa(); MixpanelUtils.track(MixpanelEvents.EXCHANGE_FORM_BUY_NEXA_CLICKED, { amount, estimatedNexa }); }}
-                disabled={!amount || parseFloat(amount) < 1 || creatingOrder || !nexaAddress || !isWalletValid}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                disabled={!amount || parseFloat(amount) < 1 || creatingOrder || !nexaAddress || !isWalletValid || limitExceeded}
+                className={`w-full font-bold py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${limitExceeded
+                    ? "bg-red-500/20 text-red-500 border border-red-500/50 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    }`}
             >
-                {creatingOrder ? <Loader2 className="animate-spin" /> : <><Wallet size={20} /> {nexaAddress ? "Buy Nexa" : "Add Wallet to Buy"}</>}
+                {creatingOrder ? <Loader2 className="animate-spin" /> : (
+                    limitExceeded ? "Limit Exceeded" : <><Wallet size={20} /> {nexaAddress ? "Buy Nexa" : "Add Wallet to Buy"}</>
+                )}
             </button>
         </div>
     );

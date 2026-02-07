@@ -1,11 +1,23 @@
 import { prisma } from "@/lib/prisma";
 
 export class ConfigService {
+    private static cache: {
+        price: number | null;
+        inrLimit: number | null;
+    } = {
+            price: null,
+            inrLimit: null
+        };
+
     /**
      * Get NEXA price in INR (price of 1 NEXA token)
      * Default: 1 Cr NEXA (10,000,000) = 500 INR => 0.00005 INR per NEXA
      */
     static async getNexaPrice(): Promise<number> {
+        if (this.cache.price !== null) {
+            return this.cache.price;
+        }
+
         let priceConfig = await prisma.appConfig.findUnique({
             where: { key: "NEXA_PRICE_INR" }
         });
@@ -21,7 +33,36 @@ export class ConfigService {
             });
         }
 
-        return parseFloat(priceConfig.value);
+        this.cache.price = parseFloat(priceConfig.value);
+        return this.cache.price;
+    }
+
+    /**
+     * Get Max INR limit per order
+     * Default: 100,000 INR
+     */
+    static async getNexaInrLimit(): Promise<number> {
+        if (this.cache.inrLimit !== null) {
+            return this.cache.inrLimit;
+        }
+
+        let limitConfig = await prisma.appConfig.findUnique({
+            where: { key: "NEXA_INR_LIMIT" }
+        });
+
+        if (!limitConfig) {
+            // Fallback: create default limit (100,000 INR)
+            limitConfig = await prisma.appConfig.create({
+                data: {
+                    key: "NEXA_INR_LIMIT",
+                    value: "100000",
+                    description: "Maximum INR amount per order"
+                }
+            });
+        }
+
+        this.cache.inrLimit = parseFloat(limitConfig.value);
+        return this.cache.inrLimit;
     }
 
     /**
@@ -53,6 +94,31 @@ export class ConfigService {
                 description: "Price of 1 NEXA token in INR"
             }
         });
+
+        // Update in-memory cache
+        this.cache.price = parseFloat(pricePerNexaString);
+    }
+
+    /**
+     * Set Max INR limit per order
+     * @param limit Amount in INR
+     */
+    static async setNexaInrLimit(limit: number): Promise<void> {
+        // Ensure limit is a whole number as per UI requirements
+        const roundedLimit = Math.round(limit);
+
+        await prisma.appConfig.upsert({
+            where: { key: "NEXA_INR_LIMIT" },
+            update: { value: roundedLimit.toString() },
+            create: {
+                key: "NEXA_INR_LIMIT",
+                value: roundedLimit.toString(),
+                description: "Maximum INR amount per order"
+            }
+        });
+
+        // Update in-memory cache
+        this.cache.inrLimit = roundedLimit;
     }
 }
 

@@ -6,8 +6,11 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
-        const price = await ConfigService.getNexaPrice();
-        return NextResponse.json({ success: true, data: { price } });
+        const [price, inrLimit] = await Promise.all([
+            ConfigService.getNexaPrice(),
+            ConfigService.getNexaInrLimit()
+        ]);
+        return NextResponse.json({ success: true, data: { price, inrLimit } });
     } catch (error) {
         console.error("Config fetch failed", error);
         return NextResponse.json({ success: false, message: "Failed to fetch config" }, { status: 500 });
@@ -20,14 +23,23 @@ export async function POST(req: Request) {
         AuthService.isAdminOrThrowError(user);
 
         const body = await req.json();
-        const { pricePerCrore } = body;
+        const { pricePerCrore, inrLimit } = body;
 
-        if (!pricePerCrore || typeof pricePerCrore !== 'number') {
-            return NextResponse.json({ success: false, message: "Invalid pricePerCrore" }, { status: 400 });
+        if (pricePerCrore !== undefined) {
+            if (typeof pricePerCrore !== 'number') {
+                return NextResponse.json({ success: false, message: "Invalid pricePerCrore" }, { status: 400 });
+            }
+            await ConfigService.setNexaPrice(pricePerCrore);
         }
 
-        await ConfigService.setNexaPrice(pricePerCrore);
-        return NextResponse.json({ success: true, message: "Price updated successfully" });
+        if (inrLimit !== undefined) {
+            if (typeof inrLimit !== 'number' || inrLimit < 1) {
+                return NextResponse.json({ success: false, message: "Invalid inrLimit" }, { status: 400 });
+            }
+            await ConfigService.setNexaInrLimit(inrLimit);
+        }
+
+        return NextResponse.json({ success: true, message: "Config updated successfully" });
     } catch (error: any) {
         console.error("Config update failed", error);
         if (error instanceof ApiError) {
